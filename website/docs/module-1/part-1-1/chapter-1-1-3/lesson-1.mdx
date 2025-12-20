@@ -1,0 +1,189 @@
+---
+title: rclpy Python Agents
+sidebar_label: rclpy Python Agents
+description: Learn how to bridge Python agents to ROS controllers using rclpy
+keywords: [rclpy, python, agents, ros, controllers, robotics]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# rclpy Python Agents
+
+## Overview
+This lesson covers how to create Python agents that interface with ROS controllers using rclpy.
+
+<LearningObjectives objectives={[
+  "Understand how to create Python agents with rclpy",
+  "Implement agent behaviors using ROS communication patterns",
+  "Connect Python machine learning models to ROS systems",
+  "Create custom message types for agent communication"
+]} />
+
+## Introduction to rclpy
+rclpy is the official Python client library for ROS 2. It provides Python bindings for the ROS 2 client library (rcl) and the underlying middleware.
+
+## Building a Simple Agent
+Here's an example of a Python agent that monitors a sensor and takes action based on the data:
+
+```python
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import Twist
+import numpy as np
+
+class NavigationAgent(Node):
+    def __init__(self):
+        super().__init__('navigation_agent')
+        
+        # Subscribe to laser scan data
+        self.subscription = self.create_subscription(
+            LaserScan,
+            'scan',
+            self.laser_callback,
+            10)
+        
+        # Publisher for velocity commands
+        self.publisher = self.create_publisher(Twist, 'cmd_vel', 10)
+        
+        # Timer for agent behavior
+        self.timer = self.create_timer(0.1, self.agent_behavior)
+        
+        # Agent state
+        self.scan_data = None
+        self.cmd_vel = Twist()
+        
+    def laser_callback(self, msg):
+        self.scan_data = msg.ranges
+        
+    def agent_behavior(self):
+        if self.scan_data is not None:
+            # Simple obstacle avoidance behavior
+            min_distance = min(self.scan_data)
+            
+            if min_distance < 1.0:  # If obstacle within 1 meter
+                # Turn to avoid obstacle
+                self.cmd_vel.linear.x = 0.0
+                self.cmd_vel.angular.z = 0.5
+            else:
+                # Move forward
+                self.cmd_vel.linear.x = 0.5
+                self.cmd_vel.angular.z = 0.0
+                
+            self.publisher.publish(self.cmd_vel)
+
+def main(args=None):
+    rclpy.init(args=args)
+    agent = NavigationAgent()
+    
+    try:
+        rclpy.spin(agent)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        agent.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Integrating with Machine Learning Models
+Python agents can easily integrate with ML models:
+
+```python
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from cv_bridge import CvBridge
+import cv2
+import numpy as np
+
+class VisionAgent(Node):
+    def __init__(self):
+        super().__init__('vision_agent')
+        
+        # Initialize OpenCV bridge
+        self.bridge = CvBridge()
+        
+        # Subscribe to image data
+        self.subscription = self.create_subscription(
+            Image,
+            'camera/image_raw',
+            self.image_callback,
+            10)
+        
+        # Publisher for classification results
+        self.publisher = self.create_publisher(String, 'classification_result', 10)
+        
+        # Simulated ML model (in practice, you would load a trained model)
+        self.model = self.load_model()
+        
+    def load_model(self):
+        # In a real implementation, you would load your trained model here
+        # e.g., using TensorFlow, PyTorch, scikit-learn, etc.
+        return "dummy_model"
+    
+    def image_callback(self, msg):
+        # Convert ROS Image message to OpenCV image
+        cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        
+        # Process with ML model (simulated here)
+        result = self.classify_image(cv_image)
+        
+        # Publish result
+        result_msg = String()
+        result_msg.data = result
+        self.publisher.publish(result_msg)
+        
+    def classify_image(self, image):
+        # In a real implementation, you would run inference here
+        # For this example, we'll just return a dummy result
+        return "classification_result"
+
+def main(args=None):
+    rclpy.init(args=args)
+    agent = VisionAgent()
+    
+    try:
+        rclpy.spin(agent)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        agent.destroy_node()
+        rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Best Practices for Python Agents
+1. **Initialization**: Always call `rclpy.init()` before creating nodes
+2. **Cleanup**: Properly handle shutdown in callbacks or try/finally blocks
+3. **Threading**: Be aware of threading implications when using multiple agents
+4. **Timing**: Use ROS timers instead of Python sleep for consistency
+5. **Parameters**: Use ROS parameters for configurable agent behavior
+6. **Logging**: Use ROS logging facilities instead of print statements
+
+## Summary
+Python agents using rclpy provide a powerful way to bridge AI/ML applications with ROS control systems. They enable complex behaviors and integration with popular Python libraries for machine learning, computer vision, and data processing.
+
+## Knowledge Check
+
+<AssessmentComponent
+  type="multiple-choice"
+  question="What is rclpy in the context of ROS 2?"
+  options={[
+    "The C++ client library for ROS 2",
+    "The Python client library for ROS 2", 
+    "A service for robot control",
+    "A tool for creating launch files"
+  ]}
+  correctAnswer={1}
+  explanation="rclpy is the official Python client library for ROS 2 that provides Python bindings for the ROS 2 client library."
+/>
+
+## Next Steps
+Continue to the next lesson to learn about URDF for humanoid robots.

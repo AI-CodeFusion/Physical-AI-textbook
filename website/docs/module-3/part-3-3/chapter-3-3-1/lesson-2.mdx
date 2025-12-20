@@ -1,0 +1,352 @@
+---
+title: Lesson 3-3-1-2 - Advanced Path Planning
+sidebar_label: Lesson 2
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 3-3-1-2: Advanced Path Planning
+
+## Overview
+This lesson explores advanced path planning techniques specifically designed for humanoid robots, including dynamic walking patterns, terrain adaptation, and multi-modal locomotion strategies. You'll learn how to plan paths that consider the complex dynamics of bipedal locomotion and adapt to diverse environments.
+
+<LearningObjectives objectives={[
+  "Implement dynamic walking patterns for humanoid robots",
+  "Plan paths for diverse terrains and obstacles",
+  "Adapt locomotion modes based on environment",
+  "Optimize path planning for humanoid-specific constraints"
+]} />
+
+## Dynamic Walking Patterns
+
+### Walking Gaits
+Different walking patterns for various situations:
+- **Normal walk**: Standard bipedal gait for flat surfaces
+- **Fast walk**: Higher speed gait with different step timing
+- **Slow walk**: Careful gait for precision or stability
+- **Turn-in-place**: Special gait for rotation without forward movement
+
+### Dynamic Balance Control
+Advanced walking requires real-time balance management:
+- **ZMP (Zero Moment Point) control**: Maintaining balance during walking
+- **Capture point control**: Planning where to step to stop motion
+- **Pendulum models**: Linear Inverted Pendulum Model (LIPM) for walking
+- **Feedback control**: Adjusting steps based on balance state
+
+### Example Dynamic Walking Controller:
+```python
+import numpy as np
+from geometry_msgs.msg import Twist, Point
+from std_msgs.msg import Float64
+import rclpy
+from rclpy.node import Node
+
+class HumanoidWalkingController(Node):
+    def __init__(self):
+        super().__init__('humanoid_walking_controller')
+
+        # Walking parameters
+        self.step_length = 0.3  # meters
+        self.step_height = 0.05  # meters
+        self.step_duration = 0.8  # seconds
+        self.com_height = 0.8  # center of mass height
+        self.omega = np.sqrt(9.81 / self.com_height)  # natural frequency
+
+        # Publishers for robot joints/controllers
+        self.left_foot_publisher = self.create_publisher(Float64, '/left_foot_cmd', 10)
+        self.right_foot_publisher = self.create_publisher(Float64, '/right_foot_cmd', 10)
+        self.com_publisher = self.create_publisher(Point, '/com_cmd', 10)
+
+        # Timer for walking control
+        self.timer = self.create_timer(0.02, self.walk_control_callback)  # 50Hz control
+
+        # Walking state
+        self.left_support = True  # Start with left foot support
+        self.walk_phase = 0.0  # Current phase in walking cycle
+        self.walk_velocity = 0.0  # Desired walking velocity
+        self.turn_rate = 0.0  # Desired turning rate
+
+    def walk_control_callback(self):
+        """
+        Main walking control callback
+        """
+        # Update walking phase based on desired velocity
+        self.walk_phase += (self.step_duration / self.step_length) * self.walk_velocity * 0.02
+
+        if self.walk_phase >= self.step_duration:
+            self.walk_phase = 0.0
+            self.left_support = not self.left_support  # Switch support foot
+
+        # Calculate foot positions based on walking phase
+        left_foot_pos, right_foot_pos, com_pos = self.calculate_footstep_positions()
+
+        # Publish commands
+        self.left_foot_publisher.publish(Float64(data=left_foot_pos))
+        self.right_foot_publisher.publish(Float64(data=right_foot_pos))
+        self.com_publisher.publish(com_pos)
+
+    def calculate_footstep_positions(self):
+        """
+        Calculate foot positions based on walking phase and gait
+        """
+        # Calculate foot trajectory during swing phase
+        if self.walk_phase < self.step_duration / 2:  # Swing phase
+            # Calculate swing foot trajectory (parabolic)
+            phase = self.walk_phase / (self.step_duration / 2)
+            swing_foot_x = self.step_length * phase  # Forward motion
+            swing_foot_y = 0.0  # Side motion (for turning)
+            swing_foot_z = self.step_height * np.sin(np.pi * phase)  # Vertical motion
+
+            # Calculate support foot position
+            support_foot_x = 0.0
+            support_foot_y = 0.2 if self.left_support else -0.2  # Step width
+            support_foot_z = 0.0
+        else:  # Stance phase
+            # Calculate swing foot trajectory for next step
+            phase = (self.walk_phase - self.step_duration / 2) / (self.step_duration / 2)
+            swing_foot_x = self.step_length * (1 + phase)  # Forward motion
+            swing_foot_y = 0.0
+            swing_foot_z = self.step_height * np.sin(np.pi * phase)  # Vertical motion
+
+            # Calculate support foot position
+            support_foot_x = self.step_length / 2
+            support_foot_y = -0.2 if self.left_support else 0.2  # Step width
+            support_foot_z = 0.0
+
+        # Determine which is left vs right foot based on support foot
+        if self.left_support:
+            left_foot_pos = (support_foot_x, support_foot_y, support_foot_z)
+            right_foot_pos = (swing_foot_x, swing_foot_y, swing_foot_z)
+        else:
+            left_foot_pos = (swing_foot_x, swing_foot_y, swing_foot_z)
+            right_foot_pos = (support_foot_x, support_foot_y, support_foot_z)
+
+        # Calculate CoM position for balance
+        com_x = self.step_length / 2  # Average between feet
+        com_y = 0.0  # Center between left and right
+        com_z = self.com_height  # Maintain constant height
+
+        # Apply turning adjustments
+        if self.turn_rate != 0.0:
+            # Adjust foot positions for turning
+            left_foot_pos, right_foot_pos = self.apply_turning_adjustment(
+                left_foot_pos, right_foot_pos
+            )
+
+        return left_foot_pos, right_foot_pos, Point(x=com_x, y=com_y, z=com_z)
+
+    def apply_turning_adjustment(self, left_foot_pos, right_foot_pos):
+        """
+        Adjust foot positions for turning
+        """
+        # Simple turning adjustment - increase step width and add lateral motion
+        turn_factor = abs(self.turn_rate) * 2.0  # Scale with turn rate
+
+        if self.turn_rate > 0:  # Turning right
+            # Move right foot further out and forward
+            right_foot_pos = (
+                right_foot_pos[0] + turn_factor * 0.05,
+                right_foot_pos[1] - turn_factor * 0.05,
+                right_foot_pos[2]
+            )
+        else:  # Turning left
+            # Move left foot further out and forward
+            left_foot_pos = (
+                left_foot_pos[0] + turn_factor * 0.05,
+                left_foot_pos[1] + turn_factor * 0.05,
+                left_foot_pos[2]
+            )
+
+        return left_foot_pos, right_foot_pos
+```
+
+## Terrain Adaptation Strategies
+
+### Flat Ground Navigation
+- **Standard walking gait**: Optimized for even surfaces
+- **High precision**: Accurate foot placement for stability
+- **Energy efficiency**: Minimize energy consumption
+
+### Rough Terrain Navigation
+- **Adaptive step planning**: Adjust step size and placement
+- **Balance recovery**: Strategies for unexpected perturbations
+- **Terrain classification**: Identify and adapt to different surfaces
+
+### Stair Navigation
+- **Step climbing gait**: Specialized pattern for ascending stairs
+- **Step descending gait**: Controlled descent pattern
+- **Step height detection**: Adjust gait based on step dimensions
+
+### Example Terrain Adaptation:
+```python
+class TerrainAdaptation:
+    def __init__(self):
+        self.terrain_types = {
+            'flat': {'gait': 'normal_walk', 'step_length': 0.3, 'step_height': 0.05},
+            'rough': {'gait': 'careful_walk', 'step_length': 0.2, 'step_height': 0.08},
+            'stairs_up': {'gait': 'step_climb', 'step_length': 0.1, 'step_height': 0.15},
+            'stairs_down': {'gait': 'step_descend', 'step_length': 0.1, 'step_height': 0.15}
+        }
+        self.current_terrain = 'flat'
+        self.foot_height_threshold = 0.02  # Threshold for rough terrain
+
+    def classify_terrain(self, point_cloud_data):
+        """
+        Classify terrain based on sensor data
+        """
+        # Calculate terrain roughness from point cloud
+        z_values = [point[2] for point in point_cloud_data]
+        roughness = np.std(z_values)
+
+        if roughness > self.foot_height_threshold:
+            return 'rough'
+
+        # Check for stairs (simplified detection)
+        if self.detect_stairs(point_cloud_data):
+            return 'stairs_up' if self.is_ascending() else 'stairs_down'
+
+        return 'flat'
+
+    def detect_stairs(self, point_cloud_data):
+        """
+        Detect stairs in point cloud data
+        """
+        # Simplified stair detection
+        # In practice, use more sophisticated algorithms
+        z_values = sorted([point[2] for point in point_cloud_data])
+        if len(z_values) < 10:
+            return False
+
+        # Look for consistent height differences
+        height_diffs = np.diff(z_values[::2])  # Check every other point
+        unique_heights = np.unique(np.round(height_diffs, decimals=1))
+
+        # Check if we have consistent step-like differences
+        step_like = [h for h in unique_heights if 0.1 < abs(h) < 0.25]
+        return len(step_like) > 2
+
+    def adapt_walking_pattern(self, terrain_type):
+        """
+        Adapt walking pattern based on terrain type
+        """
+        if terrain_type not in self.terrain_types:
+            terrain_type = 'flat'  # Default to flat terrain
+
+        params = self.terrain_types[terrain_type]
+
+        # Adjust walking controller parameters
+        self.step_length = params['step_length']
+        self.step_height = params['step_height']
+        self.gait_type = params['gait']
+
+        # Adjust balance parameters based on terrain
+        if terrain_type == 'rough':
+            self.balance_margin = 0.05  # Extra stability margin
+            self.step_duration *= 1.5  # Slower steps for stability
+        else:
+            self.balance_margin = 0.02  # Normal stability margin
+            self.step_duration = 0.8  # Normal step duration
+```
+
+## Multi-Modal Locomotion
+
+### Locomotion Modes
+Humanoid robots can use different locomotion modes:
+- **Walking**: Standard bipedal locomotion
+- **Crawling**: For low-clearance situations
+- **Climbing**: For steep inclines or obstacles
+- **Jumping**: For small gaps or obstacles
+
+### Mode Transition Planning
+- **Pre-mode checks**: Verify environment supports transition
+- **Safe transition paths**: Plan stable transitions between modes
+- **Energy optimization**: Choose most efficient locomotion mode
+- **Obstacle assessment**: Determine best approach for obstacles
+
+## Path Optimization for Humanoids
+
+### Cost Functions
+Path planning for humanoids uses specialized cost functions:
+- **Balance cost**: Penalty for paths requiring unstable steps
+- **Energy cost**: Energy required for the path
+- **Time cost**: Time to traverse the path
+- **Stability cost**: Risk of falling along the path
+
+### Humanoid-Specific Constraints
+- **Kinematic constraints**: Joint limits and velocities
+- **Dynamic constraints**: Balance and stability requirements
+- **Environmental constraints**: Obstacle avoidance
+- **Gait constraints**: Requirements for specific walking patterns
+
+## Exercise
+
+<Exercise
+  title="Advanced Humanoid Path Planning"
+  description="Design a path planning system for a humanoid robot that needs to navigate through an environment with stairs, narrow passages, and rough terrain. Specify how you would implement terrain classification, gait adaptation, and mode transitions to successfully navigate this diverse environment."
+  solution={`For navigating diverse environments with stairs, narrow passages, and rough terrain:
+
+  Terrain Classification System:
+  - Use LIDAR and depth cameras for terrain mapping
+  - Implement machine learning for surface type recognition
+  - Real-time classification with sliding window approach
+  - Fusion of multiple sensor inputs for robustness
+
+  Gait Adaptation:
+  - Flat ground: Normal walking gait (0.3m steps)
+  - Rough terrain: Careful walking with smaller steps (0.15m)
+  - Stairs: Specialized climbing/descending gaits
+  - Narrow passages: Sideways walking or stepping adjustments
+
+  Mode Transitions:
+  - Pre-transition stability checks
+  - Smooth transitions between walking modes
+  - Safe fallback positions during transitions
+  - Recovery behaviors for failed transitions
+
+  Path Planning Strategy:
+  - Hierarchical planning: Global path with local adaptation
+  - Cost functions accounting for energy and stability
+  - Dynamic replanning based on terrain classification
+  - Safe zones for mode transitions`}
+/>
+
+## Planning Algorithms for Humanoids
+
+### A* with Humanoid Constraints
+Modified A* algorithm that considers humanoid-specific costs:
+- Node representation includes balance state
+- Edge costs include energy and stability factors
+- Heuristic accounts for humanoid kinematics
+
+### Sampling-Based Methods
+- **RRT (Rapidly-exploring Random Trees)**: For high-dimensional spaces
+- **PRM (Probabilistic Roadmap)**: For pre-computed maps
+- **RRT***: Optimal sampling-based planning
+
+### Trajectory Optimization
+- **Direct collocation**: Discretize trajectory and optimize
+- **Model predictive control**: Online optimization of walking patterns
+- **Nonlinear optimization**: Handle complex humanoid dynamics
+
+## Implementation Considerations
+
+### Real-time Performance
+- **Efficient data structures**: Use optimized containers for path planning
+- **Predictive planning**: Plan ahead to reduce computation time
+- **Parallel processing**: Separate perception, planning, and control
+- **Hierarchical planning**: Coarse global plan with detailed local execution
+
+### Safety and Robustness
+- **Emergency stopping**: Mechanisms to stop safely
+- **Fallback behaviors**: Default actions when planning fails
+- **Sensor fusion**: Combine multiple sensors for reliability
+- **Uncertainty handling**: Account for sensor and model uncertainties
+
+## Summary
+
+Advanced path planning for humanoid robots requires considering complex dynamics, balance constraints, and diverse locomotion modes. By implementing terrain adaptation, dynamic walking patterns, and multi-modal locomotion strategies, humanoid robots can navigate challenging environments effectively. Understanding these advanced techniques is crucial for developing robust humanoid navigation systems.
+
+## Next Steps
+
+With advanced path planning techniques mastered, you're ready to move to the next module which covers Vision-Language-Action systems for humanoid robots.

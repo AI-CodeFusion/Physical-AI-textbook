@@ -1,0 +1,383 @@
+---
+title: Lesson 4-1-1-1 - Voice Command Processing
+sidebar_label: Lesson 1
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 4-1-1-1: Voice Command Processing
+
+## Overview
+This lesson introduces voice command processing for humanoid robots using OpenAI Whisper and related technologies. You'll learn how to implement speech recognition systems that enable natural human-robot interaction through voice commands.
+
+<LearningObjectives objectives={[
+  "Implement voice command recognition using OpenAI Whisper",
+  "Process and interpret natural language commands",
+  "Integrate voice processing with robot control systems",
+  "Handle voice command ambiguity and errors"
+]} />
+
+## Introduction to Voice Command Processing
+
+Voice command processing enables natural interaction between humans and robots, allowing users to control robots using spoken language. This technology is essential for creating intuitive interfaces, especially for humanoid robots that are designed to interact with humans in natural environments.
+
+### Key Components of Voice Command Systems
+- **Speech Recognition**: Converting speech to text
+- **Natural Language Understanding**: Interpreting the meaning of commands
+- **Command Execution**: Translating commands into robot actions
+- **Feedback Generation**: Providing confirmation or error messages
+
+### Benefits of Voice Commands for Humanoids
+- **Natural Interaction**: More intuitive than button-based interfaces
+- **Hands-Free Operation**: Allows users to multitask
+- **Accessibility**: Enables interaction for users with mobility limitations
+- **Social Integration**: Facilitates natural human-robot social interaction
+
+## OpenAI Whisper for Speech Recognition
+
+OpenAI Whisper is a state-of-the-art speech recognition model that can transcribe speech to text with high accuracy. It's particularly useful for robotics applications due to its robustness across different accents, background noise, and audio qualities.
+
+### Whisper Features
+- **Multilingual Support**: Supports multiple languages
+- **Robustness**: Works well with various audio conditions
+- **Timestamps**: Provides timing information for speech segments
+- **Punctuation**: Automatically adds punctuation to transcriptions
+
+### Whisper Implementation Example:
+```python
+import whisper
+import torch
+import numpy as np
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+from audio_common_msgs.msg import AudioData
+import io
+import wave
+
+class VoiceCommandProcessor(Node):
+    def __init__(self):
+        super().__init__('voice_command_processor')
+
+        # Load Whisper model
+        # Options: 'tiny', 'base', 'small', 'medium', 'large'
+        self.model = whisper.load_model("base")
+
+        # Subscribe to audio input
+        self.audio_subscription = self.create_subscription(
+            AudioData,
+            '/audio_input',
+            self.audio_callback,
+            10
+        )
+
+        # Publisher for recognized text
+        self.text_publisher = self.create_publisher(
+            String,
+            '/recognized_text',
+            10
+        )
+
+        # Publisher for commands
+        self.command_publisher = self.create_publisher(
+            String,
+            '/robot_commands',
+            10
+        )
+
+        # Store audio chunks for processing
+        self.audio_buffer = []
+        self.buffer_size = 44100 * 2  # 2 seconds of audio at 44.1kHz
+
+    def audio_callback(self, msg):
+        """
+        Process incoming audio data
+        """
+        # Convert audio data to numpy array
+        audio_data = np.frombuffer(msg.data, dtype=np.int16).astype(np.float32) / 32768.0
+
+        # Add to buffer
+        self.audio_buffer.extend(audio_data)
+
+        # If buffer is full, process the audio
+        if len(self.audio_buffer) >= self.buffer_size:
+            self.process_audio_buffer()
+            # Keep some overlap to avoid missing speech at boundaries
+            self.audio_buffer = self.audio_buffer[int(self.buffer_size/2):]
+
+    def process_audio_buffer(self):
+        """
+        Process the accumulated audio buffer with Whisper
+        """
+        if len(self.audio_buffer) < 1024:  # Minimum buffer size
+            return
+
+        # Convert buffer to tensor
+        audio_tensor = torch.from_numpy(np.array(self.audio_buffer))
+
+        # Process with Whisper
+        result = self.model.transcribe(audio_tensor.numpy())
+        recognized_text = result["text"].strip()
+
+        # Only publish if we have meaningful text
+        if recognized_text and len(recognized_text) > 2:
+            # Publish recognized text
+            text_msg = String()
+            text_msg.data = recognized_text
+            self.text_publisher.publish(text_msg)
+
+            # Process the command
+            self.process_command(recognized_text)
+
+    def process_command(self, text):
+        """
+        Process the recognized text to extract commands
+        """
+        # Convert to lowercase for easier processing
+        text_lower = text.lower()
+
+        # Simple command recognition
+        if "move forward" in text_lower:
+            command = "MOVE_FORWARD"
+        elif "move backward" in text_lower or "go back" in text_lower:
+            command = "MOVE_BACKWARD"
+        elif "turn left" in text_lower:
+            command = "TURN_LEFT"
+        elif "turn right" in text_lower:
+            command = "TURN_RIGHT"
+        elif "stop" in text_lower:
+            command = "STOP"
+        elif "raise your arm" in text_lower or "lift your arm" in text_lower:
+            command = "RAISE_ARM"
+        elif "lower your arm" in text_lower or "put your arm down" in text_lower:
+            command = "LOWER_ARM"
+        elif "wave" in text_lower:
+            command = "WAVE"
+        elif "dance" in text_lower:
+            command = "DANCE"
+        else:
+            command = f"UNKNOWN: {text}"
+
+        # Publish command
+        cmd_msg = String()
+        cmd_msg.data = command
+        self.command_publisher.publish(cmd_msg)
+
+        self.get_logger().info(f"Recognized: {text} -> Command: {command}")
+```
+
+## Natural Language Understanding
+
+Beyond simple speech-to-text conversion, effective voice command systems need to understand the intent behind the spoken words:
+
+### Intent Recognition
+- **Named Entity Recognition**: Identifying specific objects, locations, or people
+- **Action Recognition**: Understanding what the user wants the robot to do
+- **Context Awareness**: Understanding commands in the context of the current situation
+
+### Command Structure
+Voice commands often follow patterns:
+- **Action + Object**: "Pick up the red ball"
+- **Action + Location**: "Go to the kitchen"
+- **Action + Person**: "Follow John"
+
+## Voice Command Processing Pipeline
+
+### Audio Preprocessing
+Before sending audio to Whisper:
+- **Noise Reduction**: Remove background noise
+- **Audio Enhancement**: Improve signal quality
+- **VAD (Voice Activity Detection)**: Detect when speech is present
+- **Audio Format Conversion**: Ensure proper format for Whisper
+
+### Post-Processing
+After receiving text from Whisper:
+- **Command Extraction**: Identify robot commands in the text
+- **Parameter Parsing**: Extract parameters for commands
+- **Validation**: Verify commands are appropriate
+- **Execution**: Send commands to robot control systems
+
+## Integration with Robot Control
+
+### ROS 2 Integration
+Voice command systems typically integrate with ROS 2 using:
+- **Action Servers**: For complex commands with feedback
+- **Services**: For immediate commands
+- **Topics**: For continuous control signals
+
+### Example Integration:
+```python
+from rclpy.action import ActionClient
+from control_msgs.action import FollowJointTrajectory
+from geometry_msgs.msg import Twist
+
+class VoiceCommandIntegrator(Node):
+    def __init__(self):
+        super().__init__('voice_command_integrator')
+
+        # Subscribe to voice commands
+        self.command_subscription = self.create_subscription(
+            String,
+            '/robot_commands',
+            self.command_callback,
+            10
+        )
+
+        # Publisher for base movement
+        self.cmd_vel_publisher = self.create_publisher(
+            Twist,
+            '/cmd_vel',
+            10
+        )
+
+        # Action client for arm control
+        self.arm_action_client = ActionClient(
+            self,
+            FollowJointTrajectory,
+            'arm_controller/follow_joint_trajectory'
+        )
+
+    def command_callback(self, msg):
+        """
+        Process incoming voice commands
+        """
+        command = msg.data
+
+        if command == "MOVE_FORWARD":
+            self.move_forward()
+        elif command == "MOVE_BACKWARD":
+            self.move_backward()
+        elif command == "TURN_LEFT":
+            self.turn_left()
+        elif command == "TURN_RIGHT":
+            self.turn_right()
+        elif command == "STOP":
+            self.stop_robot()
+        elif command == "RAISE_ARM":
+            self.raise_arm()
+        elif command == "LOWER_ARM":
+            self.lower_arm()
+
+    def move_forward(self):
+        """
+        Move robot forward
+        """
+        twist = Twist()
+        twist.linear.x = 0.2  # 0.2 m/s forward
+        self.cmd_vel_publisher.publish(twist)
+
+    def move_backward(self):
+        """
+        Move robot backward
+        """
+        twist = Twist()
+        twist.linear.x = -0.2  # 0.2 m/s backward
+        self.cmd_vel_publisher.publish(twist)
+
+    def turn_left(self):
+        """
+        Turn robot left
+        """
+        twist = Twist()
+        twist.angular.z = 0.5  # 0.5 rad/s counter-clockwise
+        self.cmd_vel_publisher.publish(twist)
+
+    def turn_right(self):
+        """
+        Turn robot right
+        """
+        twist = Twist()
+        twist.angular.z = -0.5  # 0.5 rad/s clockwise
+        self.cmd_vel_publisher.publish(twist)
+
+    def stop_robot(self):
+        """
+        Stop robot movement
+        """
+        twist = Twist()
+        # Zero velocities to stop
+        self.cmd_vel_publisher.publish(twist)
+
+    def raise_arm(self):
+        """
+        Raise the robot's arm
+        """
+        # Implementation would send trajectory to arm controller
+        pass
+
+    def lower_arm(self):
+        """
+        Lower the robot's arm
+        """
+        # Implementation would send trajectory to arm controller
+        pass
+```
+
+## Exercise
+
+<Exercise
+  title="Voice Command System Design"
+  description="Design a voice command processing system for a humanoid robot that can understand and execute complex commands like 'Go to the kitchen and bring me a cup'. Identify the components needed, the processing pipeline, and how you would handle ambiguous commands."
+  solution={`For a complex voice command system:
+
+  Components Needed:
+  - Audio input system (microphones)
+  - OpenAI Whisper for speech recognition
+  - Natural language understanding module
+  - Robot navigation system
+  - Manipulation control system
+  - Context awareness module
+
+  Processing Pipeline:
+  1. Audio capture and preprocessing
+  2. Speech-to-text with Whisper
+  3. Natural language parsing
+  4. Intent and entity extraction
+  5. Command validation
+  6. Task execution (navigation + manipulation)
+
+  Handling Ambiguity:
+  - Ask clarifying questions ('Which cup?')
+  - Use context to disambiguate ('The blue cup on the table')
+  - Provide feedback ('Going to the kitchen now')
+  - Implement error recovery`}
+/>
+
+## Challenges and Solutions
+
+### Common Challenges
+- **Background Noise**: Interference affecting recognition accuracy
+- **Multiple Speakers**: Distinguishing between speakers
+- **Command Ambiguity**: Unclear or ambiguous commands
+- **Real-time Processing**: Meeting timing constraints
+- **Domain Specificity**: Understanding robot-specific commands
+
+### Solutions
+- **Noise Reduction**: Use beamforming microphones
+- **Speaker Separation**: Implement speaker diarization
+- **Context Awareness**: Use robot's state to disambiguate
+- **Optimization**: Use efficient models and processing
+- **Training**: Fine-tune models on robot-specific commands
+
+## Best Practices
+
+### System Design
+- Use modular architecture for maintainability
+- Implement proper error handling and recovery
+- Plan for different acoustic environments
+- Consider privacy and data security
+
+### Performance Optimization
+- Use appropriate model size for hardware constraints
+- Implement audio buffering for continuous processing
+- Optimize for the specific vocabulary of robot commands
+- Monitor and adapt to changing acoustic conditions
+
+## Summary
+
+Voice command processing enables natural interaction between humans and humanoid robots. By leveraging technologies like OpenAI Whisper for speech recognition and implementing proper natural language understanding, robots can respond to spoken commands effectively. Understanding the complete pipeline from audio input to command execution is crucial for implementing robust voice-controlled robotic systems.
+
+## Next Steps
+
+In the next lesson, we'll explore speech-to-text integration in more detail, learning how to improve recognition accuracy and handle various audio conditions in robotics applications.

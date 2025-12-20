@@ -1,0 +1,167 @@
+---
+title: ROS 2 Fundamentals Assessment
+sidebar_label: Module Assessment
+description: Assessment for the ROS 2 fundamentals module
+keywords: [ros2, assessment, quiz, robotics, fundamentals]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# ROS 2 Fundamentals Assessment
+
+## Overview
+Test your understanding of ROS 2 fundamentals with this comprehensive assessment.
+
+<LearningObjectives objectives={[
+  "Demonstrate knowledge of ROS 2 architecture",
+  "Understand communication patterns in ROS 2",
+  "Apply concepts to practical scenarios",
+  "Identify appropriate use cases for different patterns"
+]} />
+
+## Question 1
+<AssessmentComponent
+  type="multiple-choice"
+  question="What does DDS stand for in the context of ROS 2?"
+  options={[
+    "Distributed Development System",
+    "Data Distribution Service", 
+    "Dynamic Discovery System",
+    "Direct Data Sharing"
+  ]}
+  correctAnswer={1}
+  explanation="DDS stands for Data Distribution Service, which is the middleware standard that ROS 2 uses for communication."
+/>
+
+## Question 2
+<AssessmentComponent
+  type="multiple-choice"
+  question="Which client library is used for Python in ROS 2?"
+  options={[
+    "rospy",
+    "rclpy", 
+    "rclcpp",
+    "pyros"
+  ]}
+  correctAnswer={1}
+  explanation="rclpy is the official Python client library for ROS 2."
+/>
+
+## Question 3
+<AssessmentComponent
+  type="multiple-choice"
+  question="When would you use a ROS 2 service instead of a topic?"
+  options={[
+    "To broadcast sensor data to multiple nodes",
+    "To request a specific action and receive a response", 
+    "To continuously stream camera data",
+    "To store persistent configuration parameters"
+  ]}
+  correctAnswer={1}
+  explanation="Services are used for request/reply communication patterns when you need a specific action to be performed and a response returned."
+/>
+
+## Question 4
+<AssessmentComponent
+  type="multiple-choice"
+  question="What is the primary advantage of ROS 2's distributed architecture over ROS 1's single-master architecture?"
+  options={[
+    "Faster message passing",
+    "Lower memory usage", 
+    "Elimination of single point of failure",
+    "Better visualization tools"
+  ]}
+  correctAnswer={2}
+  explanation="ROS 2's distributed architecture eliminates the single point of failure that existed in ROS 1's master-based system, making it more robust."
+/>
+
+## Question 5
+<AssessmentComponent
+  type="multiple-choice"
+  question="Which URDF joint type would be most appropriate for a robot's elbow?"
+  options={[
+    "fixed",
+    "continuous", 
+    "revolute",
+    "prismatic"
+  ]}
+  correctAnswer={2}
+  explanation="A revolute joint allows rotation around a single axis, which is appropriate for an elbow joint that bends in one direction."
+/>
+
+## Question 6
+<AssessmentComponent
+  type="multiple-choice"
+  question="In QoS (Quality of Service) for ROS 2, what does 'reliability' control?"
+  options={[
+    "How often messages are sent",
+    "Whether messages are guaranteed to be delivered", 
+    "The priority level of messages",
+    "The size limit of messages"
+  ]}
+  correctAnswer={1}
+  explanation="Reliability controls whether messages are guaranteed to be delivered. It can be 'reliable' (guaranteed delivery) or 'best effort' (no guarantee)."
+/>
+
+## Question 7
+<AssessmentComponent
+  type="multiple-choice"
+  question="Which command is used to list all active ROS 2 topics?"
+  options={[
+    "ros2 node list",
+    "ros2 service list", 
+    "ros2 topic list",
+    "ros2 param list"
+  ]}
+  correctAnswer={2}
+  explanation="ros2 topic list is the command used to list all active ROS 2 topics in the system."
+/>
+
+## Question 8
+<AssessmentComponent
+  type="multiple-choice"
+  question="What is the main benefit of using launch files in ROS 2?"
+  options={[
+    "They improve the performance of nodes",
+    "They allow multiple nodes to be started with a single command", 
+    "They reduce the memory footprint",
+    "They provide better visualization"
+  ]}
+  correctAnswer={1}
+  explanation="Launch files allow multiple nodes and configurations to be started with a single command, simplifying system startup."
+/>
+
+## Question 9
+<AssessmentComponent
+  type="multiple-choice"
+  question="Which communication pattern is appropriate for broadcasting real-time sensor data?"
+  options={[
+    "Services",
+    "Actions", 
+    "Topics",
+    "Parameters"
+  ]}
+  correctAnswer={2}
+  explanation="Topics are appropriate for broadcasting real-time sensor data since they support the publish/subscribe pattern with multiple potential subscribers."
+/>
+
+## Question 10
+<AssessmentComponent
+  type="multiple-choice"
+  question="What is the purpose of the 'tf2' transform library in ROS 2?"
+  options={[
+    "To create custom messages",
+    "To manage communication between nodes", 
+    "To handle coordinate frame transformations",
+    "To optimize computational performance"
+  ]}
+  correctAnswer={2}
+  explanation="The 'tf2' library handles coordinate frame transformations, allowing different nodes to share and transform data between different coordinate frames."
+/>
+
+## Summary
+This assessment covered fundamental concepts of ROS 2 including architecture, communication patterns, URDF, QoS, and tools. Successfully completing these questions demonstrates a solid understanding of ROS 2 fundamentals needed for more advanced robotics applications.
+
+## Next Steps
+If you've successfully completed this assessment, you're ready to move on to more advanced topics like simulation, perception, and navigation in subsequent modules.

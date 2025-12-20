@@ -1,0 +1,235 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+  /* Physical AI Color Palette */
+  --ifm-color-primary: #1a75bc; /* Robot blue */
+  --ifm-color-primary-dark: #1667a5;
+  --ifm-color-primary-darker: #145a8e;
+  --ifm-color-primary-darkest: #0f446e;
+  --ifm-color-primary-light: #2d84c5;
+  --ifm-color-primary-lighter: #3a8dca;
+  --ifm-color-primary-lightest: #58a2d2;
+  --ifm-color-secondary: #ff6b35; /* Accent orange */
+  --ifm-color-secondary-dark: #e55f2e;
+  --ifm-color-secondary-darker: #cc5428;
+  --ifm-color-secondary-darkest: #b34922;
+  --ifm-color-secondary-light: #ff7a4a;
+  --ifm-color-secondary-lighter: #ff885f;
+  --ifm-color-secondary-lightest: #ff9774;
+
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(26, 117, 188, 0.1);
+
+  /* Custom spacing and layout */
+  --ifm-spacing-horizontal: 1.5rem;
+  --ifm-spacing-vertical: 1.5rem;
+
+  /* Custom border radius */
+  --ifm-global-radius: 8px;
+  --ifm-card-border-radius: 8px;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme='dark'] {
+  --ifm-color-primary: #4d9de0;
+  --ifm-color-primary-dark: #3b8dd7;
+  --ifm-color-primary-darker: #337bc4;
+  --ifm-color-primary-darkest: #29639e;
+  --ifm-color-primary-light: #5fa1e3;
+  --ifm-color-primary-lighter: #71afe5;
+  --ifm-color-primary-lightest: #94c4eb;
+  --ifm-color-secondary: #ff8c52;
+  --ifm-color-secondary-dark: #ff7a39;
+  --ifm-color-secondary-darker: #ff6b2a;
+  --ifm-color-secondary-darkest: #e55f25;
+  --ifm-color-secondary-light: #ff9a67;
+  --ifm-color-secondary-lighter: #ffaa7c;
+  --ifm-color-secondary-lightest: #ffbb91;
+  --docusaurus-highlighted-code-line-bg: rgba(77, 157, 224, 0.15);
+}
+
+/* Custom typography */
+.docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+/* Card styling for lessons */
+.card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom banner for module introductions */
+.module-intro-banner {
+  background: linear-gradient(135deg, var(--ifm-color-primary), #0d5a8f);
+  color: white;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
+  border-radius: var(--ifm-global-radius);
+  text-align: center;
+}
+
+.module-intro-banner h1 {
+  color: white;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.module-intro-banner p {
+  font-size: 1.2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  opacity: 0.9;
+}
+
+/* Progress bar styling */
+.progress-container {
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: var(--ifm-color-primary);
+  border-radius: 5px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+/* Simulation container styling */
+.simulation-container {
+  border: 1px solid var(--ifm-color-secondary);
+  border-radius: var(--ifm-global-radius);
+  padding: 1rem;
+  margin: 1.5rem 0;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.simulation-title {
+  font-weight: bold;
+  color: var(--ifm-color-secondary);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.simulation-title::before {
+  content: "🤖";
+  margin-right: 0.5rem;
+  font-size: 1.2em;
+}
+
+/* Assessment styling */
+.assessment-container {
+  border: 1px solid var(--ifm-color-primary);
+  border-radius: var(--ifm-global-radius);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  background-color: rgba(26, 117, 188, 0.03);
+}
+
+.assessment-title {
+  color: var(--ifm-color-primary);
+  font-weight: bold;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.assessment-title::before {
+  content: "✅";
+  margin-right: 0.5rem;
+}
+
+/* Custom blockquote styling for tips */
+blockquote {
+  border-left: 4px solid var(--ifm-color-secondary);
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  border-radius: 0 var(--ifm-global-radius) var(--ifm-global-radius) 0;
+}
+
+/* Navigation improvements */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer styling */
+.footer {
+  background-color: #1a1a1a;
+  color: white;
+}
+
+/* Custom button styling */
+.button--secondary {
+  background-color: var(--ifm-color-secondary);
+  border-color: var(--ifm-color-secondary);
+  color: white;
+}
+
+.button--secondary:hover {
+  background-color: var(--ifm-color-secondary-darker);
+  border-color: var(--ifm-color-secondary-darker);
+  color: white;
+}
+
+/* Learning Objectives styling */
+.objectives-container {
+  color: #333;
+}
+
+.objectives-container ul {
+  color: #333;
+}
+
+.objectives-container li {
+  color: #333;
+}
+
+/* Dark mode for Learning Objectives */
+[data-theme='dark'] .objectives-container {
+  color: #e0e0e0;
+  background-color: #2d2d2d;
+}
+
+[data-theme='dark'] .objectives-container ul {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .objectives-container li {
+  color: #e0e0e0;
+}
+
+[data-theme='dark'] .objectives-container h3 {
+  color: #4d9de0;
+}
+
+/* Code block styling */
+code {
+  background-color: rgba(27, 31, 35, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.875em;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+}

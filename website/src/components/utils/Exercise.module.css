@@ -1,0 +1,65 @@
+.exerciseContainer {
+  border-left: 4px solid #4a90e2;
+  background-color: #f8f9fa;
+  margin: 20px 0;
+  padding: 16px;
+  border-radius: 0 4px 4px 0;
+}
+
+.exerciseHeader {
+  margin-bottom: 12px;
+}
+
+.exerciseTitle {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.25rem;
+}
+
+.exerciseBody {
+  padding-left: 8px;
+}
+
+.exerciseActions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.solutionButton {
+  background-color: #4a90e2;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  margin: 4px 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.solutionButton:hover {
+  background-color: #357abd;
+}
+
+.solutionContainer {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #e8f4ff;
+  border-radius: 4px;
+  border-left: 3px solid #4a90e2;
+}
+
+.solutionText {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding: 8px;
+  background-color: #fff;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.95em;
+  line-height: 1.5;
+}

@@ -1,0 +1,73 @@
+---
+title: History of ROS
+sidebar_label: History of ROS
+description: Learn about the evolution from ROS 1 to ROS 2
+keywords: [ros, history, robotics, development]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# History of ROS
+
+## Overview
+This lesson covers the evolution of the Robot Operating System from its origins to the current state.
+
+<LearningObjectives objectives={[
+  "Understand the origins of ROS",
+  "Identify key differences between ROS 1 and ROS 2",
+  "Recognize the reasons for developing ROS 2"
+]} />
+
+## Origins of ROS
+ROS (Robot Operating System) was initially developed by Willow Garage in 2007. It started as a research platform designed to provide a common framework for robotics software development. The goal was to create sharable, modular code that could be reused across different robotic platforms.
+
+Initially, ROS was designed to address the problem of every robotics lab developing their own ad-hoc robotics frameworks, which led to poor code reusability and high development costs.
+
+## Evolution to ROS 2
+ROS 1 had several limitations that became more apparent as robotics applications expanded:
+
+- Single master architecture that could become a single point of failure
+- Limited support for real-time systems
+- Centralized system architecture wasn't suitable for distributed systems
+- Challenging deployment in production environments
+- Licensing issues (GPL v3)
+
+To address these issues, the Open Source Robotics Foundation (OSRF) began development of ROS 2 in 2014, officially released in 2015. The new system was built on DDS (Data Distribution Service) to provide:
+
+- Distributed architecture without a single master
+- Improved support for real-time systems
+- Better security model for production deployment
+- Quality of Service (QoS) policies for communication reliability
+- Multi-vendor support for DDS implementations
+
+## Key Differences
+| ROS 1 | ROS 2 |
+|-------|-------|
+| Single master architecture | Distributed architecture |
+| TCPROS/RosTCPROS | DDS-based communications |
+| No built-in security | Security built from the ground up |
+| Limited real-time support | Improved real-time support |
+| Python 2 & C++03 | Python 3 & C++14 |
+| Centralized tools | Distributed tooling |
+
+## Summary
+ROS has evolved from a simple research framework to a sophisticated ecosystem supporting everything from academic research to commercial applications. ROS 2 addresses many of the architectural limitations of ROS 1 and provides a foundation for the next generation of robotics applications.
+
+## Knowledge Check
+
+<AssessmentComponent
+  type="multiple-choice"
+  question="When was ROS initially developed?"
+  options={[
+    "2005",
+    "2007", 
+    "2009",
+    "2012"
+  ]}
+  correctAnswer={1}
+  explanation="ROS was initially developed by Willow Garage in 2007."
+/>
+
+## Next Steps
+Continue to the next lesson to learn about the ROS 2 architecture and core concepts.

@@ -1,0 +1,502 @@
+---
+title: Lesson 4-1-1-2 - Speech-to-Text Integration
+sidebar_label: Lesson 2
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 4-1-1-2: Speech-to-Text Integration
+
+## Overview
+This lesson focuses on the integration of speech-to-text systems with humanoid robot platforms, emphasizing accuracy optimization, real-time processing, and robustness in various acoustic environments. You'll learn to implement and optimize speech recognition for robotics applications.
+
+<LearningObjectives objectives={[
+  "Optimize speech-to-text accuracy for robotics applications",
+  "Implement real-time processing with low latency",
+  "Handle various acoustic environments and conditions",
+  "Integrate speech recognition with robot feedback systems"
+]} />
+
+## Speech-to-Text in Robotics Context
+
+### Differences from General STT
+Robotics applications have unique requirements for speech-to-text systems:
+- **Real-time constraints**: Immediate response for interactive systems
+- **Domain specificity**: Limited vocabulary of robot commands
+- **Acoustic challenges**: Robot self-noise, movement, and environment
+- **Robustness needs**: Operation in diverse environments
+
+### Performance Metrics for Robotics
+- **Latency**: Time from speech input to text output
+- **Accuracy**: Correct transcription rate in robot environment
+- **Robustness**: Performance across different acoustic conditions
+- **Efficiency**: Computational and power requirements
+
+## Optimizing Speech Recognition for Robots
+
+### Model Selection and Tuning
+Different models offer trade-offs between accuracy, speed, and resource usage:
+
+```python
+import whisper
+import torch
+
+# Model options with trade-offs
+models = {
+    "tiny": {"size": "75MB", "relative_speed": "fastest", "accuracy": "lowest"},
+    "base": {"size": "145MB", "relative_speed": "fast", "accuracy": "low"},
+    "small": {"size": "465MB", "relative_speed": "medium", "accuracy": "medium"},
+    "medium": {"size": "1.5GB", "relative_speed": "slow", "accuracy": "high"},
+    "large": {"size": "3.0GB", "relative_speed": "slowest", "accuracy": "highest"}
+}
+
+class OptimizedSTT:
+    def __init__(self, model_size="base", device="cuda"):
+        self.device = device
+        self.model = whisper.load_model(model_size).to(device)
+
+        # Optimize for inference
+        if device == "cuda":
+            self.model = self.model.half()  # Use half precision on GPU
+
+    def transcribe(self, audio_tensor, language="en"):
+        """
+        Optimized transcription with options for robotics
+        """
+        # Use fp16 for faster inference on GPU
+        if self.device == "cuda":
+            audio_tensor = audio_tensor.half()
+
+        # Transcribe with language specification
+        result = self.model.transcribe(
+            audio_tensor.cpu().numpy(),
+            language=language,
+            # Options for faster processing
+            fp16=(self.device == "cuda"),
+            without_timestamps=True
+        )
+
+        return result["text"]
+```
+
+### Domain Adaptation
+Fine-tuning models for robot-specific vocabulary:
+- **Command vocabulary**: Train on robot-specific commands
+- **Acoustic adaptation**: Adapt to robot's acoustic environment
+- **Language model integration**: Add robot-specific language patterns
+
+### Real-time Processing Optimization
+```python
+import threading
+import queue
+import time
+import numpy as np
+
+class RealTimeSTTProcessor:
+    def __init__(self, model_size="base"):
+        self.model = whisper.load_model(model_size)
+        self.audio_queue = queue.Queue()
+        self.result_queue = queue.Queue()
+        self.is_running = False
+        self.processing_thread = None
+
+        # Audio buffering for continuous processing
+        self.audio_buffer = np.array([])
+        self.buffer_size = 44100 * 2  # 2 seconds of audio
+
+        # VAD (Voice Activity Detection) parameters
+        self.energy_threshold = 0.01
+        self.silence_duration = 0.5  # seconds of silence to trigger processing
+
+    def start_processing(self):
+        """
+        Start the real-time processing thread
+        """
+        self.is_running = True
+        self.processing_thread = threading.Thread(target=self._processing_loop)
+        self.processing_thread.start()
+
+    def stop_processing(self):
+        """
+        Stop the real-time processing
+        """
+        self.is_running = False
+        if self.processing_thread:
+            self.processing_thread.join()
+
+    def _processing_loop(self):
+        """
+        Main processing loop running in separate thread
+        """
+        last_voice_time = time.time()
+
+        while self.is_running:
+            try:
+                # Get audio chunk from queue
+                audio_chunk = self.audio_queue.get(timeout=0.1)
+
+                # Add to buffer
+                self.audio_buffer = np.concatenate([self.audio_buffer, audio_chunk])
+
+                # Check for voice activity
+                if self._is_voice_active(audio_chunk):
+                    last_voice_time = time.time()
+                else:
+                    # Check if we have enough silence to process
+                    if (time.time() - last_voice_time > self.silence_duration and
+                        len(self.audio_buffer) > 44100):  # At least 1 second
+                        self._process_buffer()
+
+                # Keep only recent audio to manage memory
+                if len(self.audio_buffer) > self.buffer_size:
+                    # Keep last 2 seconds of audio
+                    self.audio_buffer = self.audio_buffer[-self.buffer_size:]
+
+            except queue.Empty:
+                continue
+
+    def _is_voice_active(self, audio_chunk):
+        """
+        Simple energy-based voice activity detection
+        """
+        energy = np.mean(np.abs(audio_chunk))
+        return energy > self.energy_threshold
+
+    def _process_buffer(self):
+        """
+        Process the current audio buffer with Whisper
+        """
+        if len(self.audio_buffer) < 1024:  # Minimum for Whisper
+            return
+
+        # Process the buffered audio
+        result = self.model.transcribe(self.audio_buffer)
+        text = result["text"].strip()
+
+        if text:  # Only return non-empty results
+            self.result_queue.put(text)
+
+        # Clear the buffer after processing
+        self.audio_buffer = np.array([])
+
+    def add_audio(self, audio_data):
+        """
+        Add audio data to be processed
+        """
+        self.audio_queue.put(audio_data)
+
+    def get_result(self):
+        """
+        Get the latest transcription result
+        """
+        try:
+            return self.result_queue.get_nowait()
+        except queue.Empty:
+            return None
+```
+
+## Handling Acoustic Challenges
+
+### Robot Self-Noise
+Robots generate various noises that can interfere with speech recognition:
+- **Fan noise**: From cooling systems
+- **Motor noise**: From actuators and servos
+- **Gear noise**: From transmission systems
+- **Vibration**: Through the robot's structure
+
+### Acoustic Solutions
+- **Directional microphones**: Focus on human speaker
+- **Noise cancellation**: Remove known robot noises
+- **Microphone placement**: Position away from noise sources
+- **Audio filtering**: Apply noise reduction algorithms
+
+### Environmental Adaptation
+```python
+import webrtcvad
+import collections
+
+class AdaptiveAudioProcessor:
+    def __init__(self):
+        # Initialize VAD (Voice Activity Detection)
+        self.vad = webrtcvad.Vad()
+        self.vad.set_mode(1)  # Aggressiveness mode: 0-3
+
+        # Audio parameters
+        self.sample_rate = 16000
+        self.frame_duration = 30  # ms
+        self.frame_size = int(self.sample_rate * self.frame_duration / 1000)
+
+        # Noise estimation
+        self.noise_buffer = collections.deque(maxlen=100)  # 100 frames = 3 seconds
+        self.is_calibrated = False
+
+    def calibrate_noise(self, audio_chunk):
+        """
+        Calibrate noise profile during quiet periods
+        """
+        if len(audio_chunk) == self.frame_size:
+            self.noise_buffer.append(audio_chunk)
+            if len(self.noise_buffer) == self.noise_buffer.maxlen:
+                self.is_calibrated = True
+                self.estimate_noise_profile()
+
+    def estimate_noise_profile(self):
+        """
+        Estimate noise characteristics from buffer
+        """
+        # Calculate average noise spectrum
+        noise_samples = np.array(self.noise_buffer)
+        self.noise_mean = np.mean(noise_samples, axis=0)
+        self.noise_std = np.std(noise_samples, axis=0)
+
+    def preprocess_audio(self, audio_chunk):
+        """
+        Preprocess audio for better STT performance
+        """
+        # Apply noise reduction if calibrated
+        if self.is_calibrated:
+            audio_chunk = self._reduce_noise(audio_chunk)
+
+        # Normalize audio
+        audio_chunk = self._normalize_audio(audio_chunk)
+
+        # Apply pre-emphasis filter to boost high frequencies
+        audio_chunk = self._pre_emphasis_filter(audio_chunk)
+
+        return audio_chunk
+
+    def _reduce_noise(self, audio_chunk):
+        """
+        Simple noise reduction based on estimated noise profile
+        """
+        # Subtract noise estimate (with flooring to avoid over-subtraction)
+        reduced = audio_chunk - self.noise_mean
+        # Apply soft thresholding
+        threshold = 0.5 * self.noise_std
+        reduced = np.where(np.abs(reduced) > threshold, reduced, 0)
+        return reduced
+
+    def _normalize_audio(self, audio_chunk):
+        """
+        Normalize audio to consistent level
+        """
+        max_val = np.max(np.abs(audio_chunk))
+        if max_val > 0:
+            return audio_chunk / max_val * 0.8  # Scale to 80% to avoid clipping
+        return audio_chunk
+
+    def _pre_emphasis_filter(self, audio_chunk, coeff=0.97):
+        """
+        Apply pre-emphasis filter to boost high frequencies
+        """
+        return np.append(audio_chunk[0], audio_chunk[1:] - coeff * audio_chunk[:-1])
+```
+
+## Integration with Robot Systems
+
+### Feedback Mechanisms
+Effective STT integration includes feedback to users:
+- **Visual feedback**: LED indicators, screen displays
+- **Audio feedback**: Confirmation sounds, synthesized speech
+- **Motion feedback**: Nodding, gestures to acknowledge commands
+
+### ROS 2 Integration Example:
+```python
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String, Bool
+from audio_common_msgs.msg import AudioData
+from geometry_msgs.msg import Twist
+from rclpy.qos import QoSProfile
+
+class IntegratedSTTNode(Node):
+    def __init__(self):
+        super().__init__('integrated_stt_node')
+
+        # STT components
+        self.stt_processor = RealTimeSTTProcessor(model_size="base")
+        self.audio_processor = AdaptiveAudioProcessor()
+
+        # ROS 2 interfaces
+        qos_profile = QoSProfile(depth=10)
+
+        # Subscriptions
+        self.audio_sub = self.create_subscription(
+            AudioData,
+            '/robot_head/microphone/audio',
+            self.audio_callback,
+            qos_profile
+        )
+
+        # Publishers
+        self.text_pub = self.create_publisher(
+            String,
+            '/stt/text_output',
+            qos_profile
+        )
+
+        self.feedback_pub = self.create_publisher(
+            String,
+            '/robot/feedback',
+            qos_profile
+        )
+
+        self.cmd_vel_pub = self.create_publisher(
+            Twist,
+            '/cmd_vel',
+            qos_profile
+        )
+
+        # Timer for processing results
+        self.processing_timer = self.create_timer(0.1, self.process_results)
+
+        # Start STT processing
+        self.stt_processor.start_processing()
+
+        self.get_logger().info("Integrated STT node initialized")
+
+    def audio_callback(self, msg):
+        """
+        Process incoming audio from robot's microphone
+        """
+        # Convert audio data to numpy array
+        audio_data = np.frombuffer(msg.data, dtype=np.int16).astype(np.float32) / 32768.0
+
+        # Preprocess audio
+        processed_audio = self.audio_processor.preprocess_audio(audio_data)
+
+        # Add to STT processor
+        self.stt_processor.add_audio(processed_audio)
+
+    def process_results(self):
+        """
+        Process STT results and generate feedback
+        """
+        result = self.stt_processor.get_result()
+        if result:
+            self.get_logger().info(f"STT Result: {result}")
+
+            # Publish the recognized text
+            text_msg = String()
+            text_msg.data = result
+            self.text_pub.publish(text_msg)
+
+            # Generate feedback and execute commands
+            self.process_command(result)
+
+            # Provide feedback to user
+            feedback_msg = String()
+            feedback_msg.data = f"Heard: {result}"
+            self.feedback_pub.publish(feedback_msg)
+
+    def process_command(self, text):
+        """
+        Process the recognized text and execute commands
+        """
+        text_lower = text.lower().strip()
+
+        # Simple command mapping
+        if "forward" in text_lower or "go ahead" in text_lower:
+            self.move_robot(0.2, 0.0)  # Move forward at 0.2 m/s
+        elif "backward" in text_lower or "go back" in text_lower:
+            self.move_robot(-0.2, 0.0)  # Move backward
+        elif "left" in text_lower:
+            self.move_robot(0.0, 0.5)  # Turn left
+        elif "right" in text_lower:
+            self.move_robot(0.0, -0.5)  # Turn right
+        elif "stop" in text_lower or "halt" in text_lower:
+            self.stop_robot()
+
+    def move_robot(self, linear_vel, angular_vel):
+        """
+        Send movement command to robot
+        """
+        twist = Twist()
+        twist.linear.x = linear_vel
+        twist.angular.z = angular_vel
+        self.cmd_vel_pub.publish(twist)
+
+    def stop_robot(self):
+        """
+        Stop robot movement
+        """
+        twist = Twist()
+        self.cmd_vel_pub.publish(twist)
+
+    def destroy_node(self):
+        """
+        Clean up resources
+        """
+        self.stt_processor.stop_processing()
+        super().destroy_node()
+```
+
+## Exercise
+
+<Exercise
+  title="STT System Optimization"
+  description="Design an optimized speech-to-text system for a humanoid robot that operates in noisy environments. Specify the audio preprocessing pipeline, model selection strategy, and feedback mechanisms you would implement to ensure reliable voice command recognition."
+  solution={`For an optimized STT system in noisy environments:
+
+  Audio Preprocessing Pipeline:
+  - Directional microphone array for speech focusing
+  - Adaptive noise cancellation using robot noise profile
+  - Voice activity detection to reduce processing load
+  - Audio normalization and pre-emphasis filtering
+  - Echo cancellation for robot's own voice
+
+  Model Selection Strategy:
+  - Use 'base' model for balance of accuracy and speed
+  - Implement model quantization for edge deployment
+  - Fine-tune on robot-specific commands and environment
+  - Use acoustic adaptation to robot's specific noise profile
+
+  Feedback Mechanisms:
+  - Visual confirmation on robot's display
+  - Audio confirmation through robot's speakers
+  - Motion feedback (nodding, pointing)
+  - Context-aware clarifications when commands are ambiguous
+
+  Performance Optimization:
+  - Real-time processing with low latency requirements
+  - Efficient buffering to minimize memory usage
+  - Selective processing based on voice activity
+  - Error recovery and reprocessing capabilities`}
+/>
+
+## Quality Assurance and Testing
+
+### Testing in Various Conditions
+- **Quiet environments**: Baseline performance testing
+- **Noisy environments**: Performance with background noise
+- **Robot noise**: Performance with robot's own sounds
+- **Different speakers**: Performance across accents and voices
+
+### Performance Monitoring
+- **Accuracy tracking**: Monitor recognition accuracy over time
+- **Latency monitoring**: Track processing delays
+- **Resource usage**: Monitor CPU, memory, and power consumption
+- **Error analysis**: Track common failure modes
+
+## Best Practices
+
+### System Architecture
+- Use modular design for maintainability
+- Implement proper error handling and recovery
+- Plan for different acoustic environments
+- Consider privacy and data security
+
+### Performance Optimization
+- Select appropriate model size for hardware
+- Optimize audio pipeline for minimal latency
+- Use hardware acceleration where available
+- Implement efficient buffering strategies
+
+## Summary
+
+Integrating speech-to-text systems with humanoid robots requires careful consideration of real-time processing, acoustic challenges, and robot-specific requirements. By implementing proper audio preprocessing, model optimization, and feedback mechanisms, robots can achieve reliable voice command recognition even in challenging environments. Understanding these integration techniques is crucial for developing natural human-robot interaction systems.
+
+## Next Steps
+
+With speech-to-text integration mastered, you're ready to explore cognitive planning techniques in the next part of this module, where you'll learn how to translate natural language commands into complex robot behaviors.

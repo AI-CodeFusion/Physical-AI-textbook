@@ -1,0 +1,191 @@
+---
+title: Lesson 2-1-1-1 - Physics and Collisions in Gazebo
+sidebar_label: Lesson 1
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 2-1-1-1: Physics and Collisions in Gazebo
+
+## Overview
+This lesson introduces the physics simulation capabilities of Gazebo, focusing on how to model physical interactions, collisions, and realistic physics behaviors for robotic systems. You'll learn how to configure physics properties and understand how they affect robot simulation.
+
+<LearningObjectives objectives={[
+  "Configure physics properties for simulated robots",
+  "Understand collision detection in Gazebo",
+  "Implement realistic physics behaviors",
+  "Troubleshoot common physics simulation issues"
+]} />
+
+## Physics Simulation in Gazebo
+
+Gazebo uses a physics engine to simulate realistic physical interactions in the virtual environment. The physics engine calculates forces, torques, collisions, and resulting motions for all objects in the simulation.
+
+### Supported Physics Engines
+Gazebo supports multiple physics engines:
+- **ODE (Open Dynamics Engine)**: Default engine, good for general-purpose simulation
+- **Bullet**: Good for complex collision detection
+- **Simbody**: Accurate for biomechanical simulations
+- **DART**: Advanced dynamics and collisions
+
+## Collision Detection
+
+Collision detection is fundamental to physics simulation. Gazebo handles two types of collisions:
+
+### Static Collisions
+- Between static objects and the environment
+- Between static objects and moving objects
+- Computationally efficient since static objects don't change position
+
+### Dynamic Collisions
+- Between moving objects
+- Requires continuous collision detection
+- More computationally intensive
+
+## Physics Properties
+
+Each object in Gazebo has physics properties that define how it behaves:
+
+### Mass and Inertia
+- Mass determines how objects respond to forces
+- Inertia affects rotational behavior
+- Must be accurately modeled for realistic simulation
+
+### Friction
+- **Static friction**: Resistance to initial motion
+- **Dynamic friction**: Resistance during motion
+- Critical for realistic wheel-ground interactions
+
+### Bounce (Restitution)
+- Determines how bouncy an object is
+- Value between 0 (no bounce) and 1 (perfectly elastic)
+- Affects impact behavior
+
+## Configuring Physics in URDF/SDF
+
+Physics properties are defined in the robot's URDF or SDF file:
+
+```xml
+<link name="link_name">
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="1 1 1"/>
+    </geometry>
+  </collision>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <box size="1 1 1"/>
+    </geometry>
+  </visual>
+  <inertial>
+    <mass value="1"/>
+    <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+  </inertial>
+  <physics>
+    <ode>
+      <mu>1.0</mu>  <!-- Friction coefficient -->
+      <mu2>1.0</mu2>
+      <kp>10000000.0</kp>  <!-- Contact stiffness -->
+      <kd>1.0</kd>  <!-- Damping coefficient -->
+      <max_vel>100.0</max_vel>
+      <min_depth>0.001</min_depth>
+    </ode>
+  </physics>
+</link>
+```
+
+## Best Practices for Physics Simulation
+
+### Model Accuracy
+- Use realistic mass and inertia values
+- Ensure collision geometry matches visual geometry
+- Verify center of mass placement
+
+### Performance Optimization
+- Use simplified collision meshes for complex objects
+- Adjust physics update rate based on simulation needs
+- Balance accuracy with computational efficiency
+
+### Stability
+- Set appropriate solver parameters
+- Use damping to prevent oscillations
+- Ensure proper joint limits
+
+## Exercise
+
+<Exercise
+  title="Physics Configuration Exercise"
+  description="Create a simple URDF model of a wheeled robot with appropriate physics properties. Define the mass, inertia, friction, and collision properties for each link. Explain how these properties would affect the robot's behavior in simulation."
+  solution={`Here's an example of a simple wheeled robot with physics properties:
+
+  <robot name="simple_robot">
+    <link name="chassis">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.5 0.3 0.2"/>
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.5 0.3 0.2"/>
+        </geometry>
+      </visual>
+      <inertial>
+        <mass value="5"/>
+        <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.2" iyz="0" izz="0.3"/>
+      </inertial>
+    </link>
+
+    <link name="wheel_left">
+      <collision>
+        <origin xyz="0 0.2 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="0.1" length="0.05"/>
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0.2 0" rpy="1.5708 0 0"/>
+        <geometry>
+          <cylinder radius="0.1" length="0.05"/>
+        </geometry>
+      </visual>
+      <inertial>
+        <mass value="0.5"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.002"/>
+      </inertial>
+    </link>
+  </robot>
+
+  These properties affect the robot's behavior by:
+  - Mass: Determining how the robot responds to forces and gravity
+  - Inertia: Affecting how easily the robot rotates
+  - Collision geometry: Determining how the robot interacts with obstacles
+  - Friction: Affecting how wheels grip the ground for movement`}
+/>
+
+## Common Physics Issues and Solutions
+
+### Instability
+- **Cause**: Inappropriate solver parameters
+- **Solution**: Adjust max_vel and min_depth parameters
+
+### Penetration
+- **Cause**: Insufficient contact stiffness or time step
+- **Solution**: Increase kp (stiffness) or reduce time step
+
+### Jittering
+- **Cause**: High friction or improper mass distribution
+- **Solution**: Adjust friction coefficients or verify mass properties
+
+## Summary
+
+Physics simulation in Gazebo is crucial for realistic robot testing. Properly configured physics properties ensure that your robot behaves similarly in simulation and reality. Understanding collision detection and physics parameters allows you to create accurate simulations that effectively support robot development and testing.
+
+## Next Steps
+
+In the next lesson, we'll explore sensor simulation in Gazebo, learning how to model various sensors and their outputs in the simulated environment.

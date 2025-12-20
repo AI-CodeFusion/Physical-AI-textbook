@@ -1,0 +1,164 @@
+---
+title: ROS 2 Fundamentals Practice Exercises
+sidebar_label: Practice Exercises
+description: Practice exercises to reinforce ROS 2 fundamentals
+keywords: [ros2, exercises, practice, robotics, fundamentals]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+
+# ROS 2 Fundamentals Practice Exercises
+
+## Overview
+These exercises will help you practice and reinforce your understanding of ROS 2 fundamentals.
+
+<LearningObjectives objectives={[
+  "Practice creating ROS 2 nodes",
+  "Implement communication patterns",
+  "Work with custom messages",
+  "Debug common ROS 2 issues"
+]} />
+
+## Exercise 1: Simple Publisher/Subscriber
+
+### Task
+Create two nodes:
+1. A publisher node that publishes a counter value every second
+2. A subscriber node that receives and prints the counter value
+
+### Requirements
+- Publisher should publish to the topic "counter_topic" 
+- Message type should be std_msgs/Int64
+- Publisher should increment the counter value every second
+- Subscriber should print the received value with a timestamp
+
+### Solution Structure
+```
+exercise_1/
+├── publisher.py
+├── subscriber.py
+└── README.md
+```
+
+### Getting Started
+```bash
+# Create a new ROS 2 package for this exercise
+ros2 pkg create --build-type ament_python exercise_1
+cd exercise_1
+# Create publisher.py and subscriber.py in the exercise_1/exercise_1 directory
+```
+
+## Exercise 2: Custom Message Service
+
+### Task
+Create a custom message service that converts temperatures between Celsius and Fahrenheit.
+
+### Requirements
+- Define a custom service message for temperature conversion
+- Create a service server that performs the conversion
+- Create a client that sends temperature values and receives conversions
+- Include proper error handling for invalid inputs
+
+### Solution Structure
+```
+exercise_2/
+├── srv/
+│   └── TemperatureConversion.srv
+├── server.py
+├── client.py
+└── README.md
+```
+
+## Exercise 3: Simple Action Server
+
+### Task
+Create an action server that simulates moving a robot to a goal position.
+
+### Requirements
+- Define a custom action for robot movement
+- Server should accept goal position (x, y coordinates)
+- Simulate movement by updating feedback on progress
+- Complete goal with success or failure status
+- Client should send goal and handle result
+
+### Solution Structure
+```
+exercise_3/
+├── action/
+│   └── MoveRobot.action
+├── server.py
+├── client.py
+└── README.md
+```
+
+## Exercise 4: URDF Robot Model
+
+### Task
+Create a URDF model for a simple wheeled robot with sensors.
+
+### Requirements
+- Define a robot with a chassis and two wheels
+- Include a camera sensor mounted on the front
+- Define proper joint connections and limits
+- Include collision and visual properties
+- Test the model in RViz
+
+### Solution Structure
+```
+exercise_4/
+├── urdf/
+│   ├── robot.urdf
+│   └── materials.xacro
+└── README.md
+```
+
+## Exercise 5: Python Agent Controller
+
+### Task
+Create a Python agent that controls a simulated robot to follow a wall.
+
+### Requirements
+- Subscribe to laser scan data
+- Implement a wall-following algorithm
+- Publish velocity commands to control the robot
+- Use the agent to navigate around obstacles
+- Test in a Gazebo simulation
+
+### Solution Structure
+```
+exercise_5/
+├── agent.py
+├── launch/
+│   └── agent_launch.py
+└── README.md
+```
+
+## Hints and Tips
+
+### For Exercise 1
+- Use `rclpy.init()` and `rclpy.spin()` for node lifecycle
+- Use `create_publisher()` and `create_subscription()` for communication
+- Remember to call `rclpy.shutdown()` when done
+
+### For Exercise 2
+- Define custom messages in the `srv` directory
+- Use `ros2 run` to test your service server and client
+- Handle exceptions for invalid inputs
+
+### For Exercise 3
+- Use `ros2 action send_goal` to test your action server
+- Action messages go in the `action` directory
+- Implement proper feedback and result publishing
+
+### For Exercise 4
+- Use Xacro to simplify complex URDF models
+- Test your model with `check_urdf` command
+- Visualize in RViz with the RobotModel plugin
+
+### For Exercise 5
+- Use appropriate QoS profiles for sensor data
+- Implement proper control loops with reasonable timing
+- Test your agent in simulation before deployment
+
+## Next Steps
+After completing these exercises, review the concepts and try creating your own ROS 2 applications. Consider combining multiple concepts from different exercises to create more complex systems.

@@ -1,0 +1,109 @@
+import BrowserOnly from '@docusaurus/BrowserOnly';
+
+/**
+ * LessonTemplate Component
+ * Standard template for Physical AI textbook lessons
+ * Follows MDX standards as specified in research.md
+ */
+
+export const LearningObjectives = ({objectives}) => (
+  <div className="objectives-container" style={{ 
+    border: '2px solid #1a75bc', 
+    borderRadius: '8px', 
+    padding: '16px', 
+    margin: '16px 0',
+    backgroundColor: '#f8f9ff'
+  }}>
+    <h3 style={{ color: '#1a75bc', margin: '0 0 12px 0' }}>Learning Objectives</h3>
+    <ul style={{ margin: 0 }}>
+      {objectives.map((objective, index) => (
+        <li key={index} style={{ marginBottom: '8px' }}>{objective}</li>
+      ))}
+    </ul>
+  </div>
+);
+
+export const SimulationComponent = ({ simulationId, title }) => (
+  <div className="simulation-container">
+    <div className="simulation-title">{title}</div>
+    <BrowserOnly>
+      {() => {
+        // This is where we'd load the actual simulation
+        // For now, we're showing a placeholder
+        return (
+          <div style={{ 
+            border: '1px dashed #ff6b35', 
+            padding: '20px', 
+            textAlign: 'center',
+            borderRadius: '4px',
+            backgroundColor: '#fff9f5'
+          }}>
+            <p>Interactive Simulation: {simulationId}</p>
+            <p>(Simulation would be embedded here in the actual implementation)</p>
+          </div>
+        );
+      }}
+    </BrowserOnly>
+  </div>
+);
+
+export const AssessmentComponent = ({ type, question, options, correctAnswer }) => {
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="assessment-container">
+      <div className="assessment-title">Knowledge Check</div>
+      <form onSubmit={handleSubmit}>
+        <p><strong>Question:</strong> {question}</p>
+        {options.map((option, index) => (
+          <div key={index} style={{ margin: '8px 0' }}>
+            <label>
+              <input
+                type="radio"
+                name="assessment"
+                value={index}
+                checked={selectedAnswer === index}
+                onChange={() => setSelectedAnswer(index)}
+                disabled={submitted}
+              />
+              {option}
+            </label>
+          </div>
+        ))}
+        <button 
+          type="submit" 
+          disabled={selectedAnswer === null || submitted}
+          style={{
+            marginTop: '12px',
+            padding: '6px 12px',
+            backgroundColor: '#1a75bc',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: selectedAnswer === null || submitted ? 'not-allowed' : 'pointer'
+          }}
+        >
+          {submitted ? 'Submitted' : 'Submit'}
+        </button>
+        {submitted && (
+          <div style={{ marginTop: '12px' }}>
+            {selectedAnswer === correctAnswer ? (
+              <p style={{ color: 'green' }}>✓ Correct! Well done.</p>
+            ) : (
+              <p style={{ color: 'red' }}>Incorrect. Try again!</p>
+            )}
+          </div>
+        )}
+      </form>
+    </div>
+  );
+};
+
+// useState is not defined in this context, so we'll need a proper React component implementation
+// For now, this is just a template showing the structure

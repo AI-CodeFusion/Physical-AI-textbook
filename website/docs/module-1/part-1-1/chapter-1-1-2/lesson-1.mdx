@@ -1,0 +1,142 @@
+---
+title: ROS 2 Nodes
+sidebar_label: ROS 2 Nodes
+description: Learn about ROS 2 nodes and how to create them
+keywords: [ros2, nodes, rclpy, rclcpp, robotics]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import SimulationComponent from '@site/src/components/Simulations/SimulationComponent';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# ROS 2 Nodes
+
+## Overview
+This lesson covers ROS 2 nodes and how to create them using different client libraries.
+
+<LearningObjectives objectives={[
+  "Understand what a ROS 2 node is",
+  "Create a simple node in Python using rclpy",
+  "Create a simple node in C++ using rclcpp",
+  "Explain the lifecycle of a ROS 2 node"
+]} />
+
+## What is a Node?
+A node is the fundamental building block of a ROS 2 system. It's a process that performs computation and communicates with other nodes through ROS's communication patterns. Nodes can run on the same machine or different machines on a network.
+
+## Creating a Node in Python (rclpy)
+
+Here's a simple example of a ROS 2 node written in Python:
+
+```python
+import rclpy
+from rclpy.node import Node
+
+class MinimalPublisher(Node):
+
+    def __init__(self):
+        super().__init__('minimal_publisher')
+        self.publisher_ = self.create_publisher(String, 'topic', 10)
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.i = 0
+
+    def timer_callback(self):
+        msg = String()
+        msg.data = 'Hello World: %d' % self.i
+        self.publisher_.publish(msg)
+        self.get_logger().info('Publishing: "%s"' % msg.data)
+        self.i += 1
+
+def main(args=None):
+    rclpy.init(args=args)
+    minimal_publisher = MinimalPublisher()
+    rclpy.spin(minimal_publisher)
+    minimal_publisher.destroy_node()
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()
+```
+
+## Creating a Node in C++ (rclcpp)
+
+Here's the equivalent node in C++:
+
+```cpp
+#include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/string.hpp"
+
+using namespace std::chrono_literals;
+
+class MinimalPublisher : public rclcpp::Node
+{
+public:
+  MinimalPublisher()
+  : Node("minimal_publisher"), count_(0)
+  {
+    publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
+    timer_ = this->create_wall_timer(
+      500ms, std::bind(&MinimalPublisher::timer_callback, this));
+  }
+
+private:
+  void timer_callback()
+  {
+    auto message = std_msgs::msg::String();
+    message.data = "Hello World: " + std::to_string(count_++);
+    RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+    publisher_->publish(message);
+  }
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
+  size_t count_;
+};
+
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<MinimalPublisher>());
+  rclcpp::shutdown();
+  return 0;
+}
+```
+
+## Node Lifecycle
+ROS 2 nodes follow a lifecycle pattern that includes several states:
+- Unconfigured
+- Inactive
+- Active
+- Finalized
+
+The lifecycle manager allows for safe transitions between these states, making it easier to manage complex robotic systems.
+
+## Simulation
+Try out ROS 2 nodes in action with our interactive simulation:
+
+<SimulationComponent 
+  simulationId="ros2-nodes" 
+  title="ROS 2 Node Communication Simulation" 
+  description="Interact with a simulation showing how ROS 2 nodes communicate with each other" 
+/>
+
+## Summary
+Nodes are the fundamental building blocks of ROS 2 applications. They can be created in multiple languages and communicate through various patterns. Understanding nodes is crucial for any ROS 2 development.
+
+## Knowledge Check
+
+<AssessmentComponent
+  type="multiple-choice"
+  question="Which client library is used for Python in ROS 2?"
+  options={[
+    "rclcpp",
+    "rclpy", 
+    "rospy",
+    "rosnode"
+  ]}
+  correctAnswer={1}
+  explanation="rclpy is the official Python client library for ROS 2."
+/>
+
+## Next Steps
+Continue to the next lesson to learn about ROS 2 topics and services.

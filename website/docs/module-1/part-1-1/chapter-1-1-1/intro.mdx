@@ -1,0 +1,60 @@
+---
+title: Chapter 1-1-1 - Introduction to ROS 2
+sidebar_label: Chapter Introduction
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+
+# Chapter 1-1-1: Introduction to ROS 2
+
+## Overview
+Welcome to the foundational chapter on ROS 2 (Robot Operating System 2). This chapter introduces you to the core concepts, architecture, and philosophy behind ROS 2 - the middleware that powers countless robotic applications worldwide. You'll understand why ROS 2 is essential for building complex robotic systems and how it differs from traditional software frameworks.
+
+<LearningObjectives objectives={[
+  "Understand the history and evolution of ROS 2",
+  "Identify the key differences between ROS 1 and ROS 2",
+  "Recognize the core components of the ROS 2 architecture",
+  "Describe the benefits of using ROS 2 for robotics development"
+]} />
+
+## What is ROS 2?
+
+ROS 2 is not just a software framework - it's a complete ecosystem designed to simplify the development of complex robotic applications. Unlike traditional software development, robotics involves managing multiple concurrent processes, handling sensor data streams, controlling actuators, and coordinating distributed systems. ROS 2 provides standardized interfaces and tools to address these challenges.
+
+### Core Philosophy
+ROS 2 follows a distributed computing model where different parts of a robot's software stack run as separate processes called "nodes". These nodes communicate with each other through standardized interfaces using publish-subscribe messaging patterns, service calls, and action protocols.
+
+## Evolution from ROS 1 to ROS 2
+
+ROS 2 represents a significant evolution from its predecessor, addressing key limitations of the original ROS:
+
+### Key Improvements in ROS 2:
+- **Real-time support**: Better timing guarantees for critical robotic functions
+- **Multi-robot systems**: Native support for coordinating multiple robots
+- **Security**: Built-in authentication and encryption capabilities
+- **Quality of Service (QoS)**: Configurable reliability and performance settings
+- **Cross-platform compatibility**: Improved support for Windows, macOS, and Linux
+- **DDS Integration**: Uses Data Distribution Service for robust communication
+
+## Why Use ROS 2?
+
+ROS 2 is the backbone of modern robotics development for several compelling reasons:
+
+1. **Modularity**: Develop, test, and maintain individual components independently
+2. **Community**: Access to thousands of packages solving common robotics problems
+3. **Hardware Abstraction**: Standardized interfaces allow easy hardware swapping
+4. **Simulation**: Extensive tools for testing without physical hardware
+5. **Scalability**: From simple robots to complex multi-robot systems
+
+## Chapter Roadmap
+
+In this chapter, you'll explore the foundations of ROS 2 through two lessons:
+
+- **Lesson 1**: We'll dive into the history of ROS and how it evolved to meet the growing demands of the robotics industry.
+- **Lesson 2**: We'll examine the ROS 2 architecture in detail, exploring nodes, topics, services, and parameters.
+
+By the end of this chapter, you'll have a solid understanding of what ROS 2 is, why it exists, and how it fits into the broader landscape of robotics development.
+
+## Next Steps
+
+Continue to Lesson 1 to explore the history of ROS and its evolution to ROS 2.

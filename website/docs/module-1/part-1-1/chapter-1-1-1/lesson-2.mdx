@@ -1,0 +1,91 @@
+---
+title: ROS 2 Architecture
+sidebar_label: ROS 2 Architecture
+description: Learn about the architecture of ROS 2 and its core components
+keywords: [ros2, architecture, nodes, topics, services]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# ROS 2 Architecture
+
+## Overview
+This lesson covers the fundamental architecture of ROS 2 and its core components.
+
+<LearningObjectives objectives={[
+  "Understand the distributed architecture of ROS 2",
+  "Identify the core components of ROS 2",
+  "Explain the role of DDS in ROS 2"
+]} />
+
+## Distributed Architecture
+Unlike ROS 1's single-master architecture, ROS 2 uses a distributed architecture based on DDS (Data Distribution Service). This eliminates the single point of failure and allows for more robust and scalable robotic systems.
+
+In ROS 2, nodes can discover each other without requiring a central master. This discovery process happens automatically when nodes are started on the same network.
+
+## Core Components
+
+### Nodes
+A node is an entity that performs computation. In ROS 2, nodes are implemented as processes that communicate with each other using ROS's publish/subscribe and service/client patterns. Each node runs within a container called a "context" which manages resources like the communication middleware.
+
+### DDS (Data Distribution Service)
+DDS is a middleware standard that ROS 2 uses for communication. It provides:
+
+- Data-centric publish/subscribe (DCPS)
+- Quality of Service (QoS) policies
+- Data distribution across networks
+- Language independence
+- Vendor neutrality
+
+DDS implementations used by ROS 2 include:
+- Fast DDS (eProsima)
+- Cyclone DDS (Eclipse)
+- RTI Connext DDS
+- Gurum DDS
+
+### Communication Patterns
+ROS 2 supports several communication patterns:
+
+- **Publish/Subscribe**: One-way data distribution where publishers send data to subscribers
+- **Service/Client**: Request/response communication pattern
+- **Action**: Goal-based communication with feedback and status
+
+## Quality of Service (QoS)
+QoS policies allow fine-tuning of communication behavior:
+
+- **Reliability**: Either "best effort" or "reliable"
+- **Durability**: Either "volatile" or "transient local"
+- **History**: Either "keep last" or "keep all"
+- **Deadline**: Maximum time between data samples
+- **Liveliness**: Method for determining node availability
+
+## Client Libraries
+ROS 2 provides client libraries for different programming languages:
+
+- **rclcpp**: C++
+- **rclpy**: Python
+- **rclnodejs**: Node.js
+- **rcldotnet**: .NET
+- **rclc**: C
+
+## Summary
+ROS 2's architecture is fundamentally different from ROS 1, using DDS to provide a distributed, robust communication system. The architecture supports multiple programming languages, provides quality of service controls, and eliminates the single point of failure.
+
+## Knowledge Check
+
+<AssessmentComponent
+  type="multiple-choice"
+  question="What does DDS stand for in the context of ROS 2?"
+  options={[
+    "Distributed Development System",
+    "Data Distribution Service", 
+    "Dynamic Discovery System",
+    "Direct Data Sharing"
+  ]}
+  correctAnswer={1}
+  explanation="DDS stands for Data Distribution Service, which is the middleware standard that ROS 2 uses for communication."
+/>
+
+## Next Steps
+Continue to the next lesson to learn about ROS 2 nodes and topics.

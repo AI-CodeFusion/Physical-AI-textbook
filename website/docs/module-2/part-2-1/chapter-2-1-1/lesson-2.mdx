@@ -1,0 +1,223 @@
+---
+title: Lesson 2-1-1-2 - Sensor Simulation
+sidebar_label: Lesson 2
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 2-1-1-2: Sensor Simulation
+
+## Overview
+This lesson explores how to simulate various types of sensors in Gazebo, including cameras, LiDAR, IMUs, and force/torque sensors. You'll learn how to configure sensor properties and understand how simulated sensors can be used to develop and test robotic perception algorithms.
+
+<LearningObjectives objectives={[
+  "Configure different types of sensors in Gazebo",
+  "Understand the parameters that affect sensor performance",
+  "Implement sensor plugins for ROS 2 integration",
+  "Compare simulated vs. real-world sensor data"
+]} />
+
+## Sensor Simulation in Gazebo
+
+Gazebo provides realistic simulation of various robotic sensors, allowing you to develop and test perception algorithms without physical hardware. The simulator models both the ideal sensor behavior and realistic noise characteristics.
+
+## Types of Sensors
+
+### Camera Sensors
+Camera sensors simulate visual data acquisition, including:
+- RGB cameras for color images
+- Depth cameras for depth information
+- Stereo cameras for 3D reconstruction
+
+#### Camera Configuration Example:
+```xml
+<sensor name="camera" type="camera">
+  <camera>
+    <horizontal_fov>1.047</horizontal_fov>
+    <image>
+      <width>640</width>
+      <height>480</height>
+      <format>R8G8B8</format>
+    </image>
+    <clip>
+      <near>0.1</near>
+      <far>100</far>
+    </clip>
+  </camera>
+  <always_on>1</always_on>
+  <update_rate>30</update_rate>
+  <visualize>true</visualize>
+</sensor>
+```
+
+### LiDAR (Range Finder) Sensors
+LiDAR sensors simulate laser range finders that provide distance measurements:
+- 2D LiDAR for planar navigation
+- 3D LiDAR for full spatial mapping
+- Ray-based simulation of laser beams
+
+#### LiDAR Configuration Example:
+```xml
+<sensor name="lidar" type="ray">
+  <ray>
+    <scan>
+      <horizontal>
+        <samples>720</samples>
+        <resolution>1</resolution>
+        <min_angle>-1.570796</min_angle>
+        <max_angle>1.570796</max_angle>
+      </horizontal>
+    </scan>
+    <range>
+      <min>0.1</min>
+      <max>30.0</max>
+      <resolution>0.01</resolution>
+    </range>
+  </ray>
+  <always_on>1</always_on>
+  <update_rate>10</update_rate>
+  <visualize>true</visualize>
+</sensor>
+```
+
+### IMU (Inertial Measurement Unit) Sensors
+IMU sensors simulate accelerometers and gyroscopes:
+- Linear acceleration measurements
+- Angular velocity measurements
+- Orientation estimation
+- Noise modeling for realistic behavior
+
+### Force/Torque Sensors
+These sensors simulate measurements from force/torque sensors in robot joints or end-effectors:
+- Joint force and torque measurements
+- Wrench (force + torque) measurements
+- Useful for manipulation and contact-based tasks
+
+## Sensor Noise Modeling
+
+Real sensors have inherent noise and inaccuracies. Gazebo allows you to model this:
+
+### Gaussian Noise
+Most sensors exhibit Gaussian noise characteristics:
+```xml
+<noise>
+  <type>gaussian</type>
+  <mean>0.0</mean>
+  <stddev>0.01</stddev>
+</noise>
+```
+
+### Bias and Drift
+Long-term sensor inaccuracies can be modeled as well:
+- Constant bias terms
+- Slow drift over time
+- Temperature-dependent effects
+
+## ROS 2 Integration
+
+Sensors in Gazebo publish data to ROS 2 topics through plugins:
+
+### Camera Integration
+- Publishes to `/camera/image_raw` (sensor_msgs/Image)
+- Publishes to `/camera/camera_info` (sensor_msgs/CameraInfo)
+
+### LiDAR Integration
+- Publishes to `/scan` (sensor_msgs/LaserScan)
+- Publishes to `/point_cloud` (sensor_msgs/PointCloud2) for 3D
+
+### IMU Integration
+- Publishes to `/imu` (sensor_msgs/Imu)
+
+## Best Practices for Sensor Simulation
+
+### Realistic Parameters
+- Use sensor parameters that match your real hardware
+- Model noise characteristics based on real sensor specifications
+- Validate simulation results against real sensor data when possible
+
+### Performance Optimization
+- Balance sensor update rates with simulation performance
+- Use appropriate sensor resolutions for your application
+- Consider computational requirements of sensor processing
+
+### Calibration
+- Simulate sensor calibration procedures
+- Account for mounting positions and orientations
+- Model extrinsic and intrinsic calibration parameters
+
+## Exercise
+
+<Exercise
+  title="Sensor Configuration Exercise"
+  description="Design a sensor configuration for a mobile robot that needs to navigate indoors. Include at least a camera and a LiDAR sensor. Specify the parameters for each sensor and explain your choices based on the robot's navigation requirements."
+  solution={`Here's a sensor configuration for an indoor navigation robot:
+
+  <sensor name="front_camera" type="camera">
+    <pose>0.1 0 0.2 0 0 0</pose>
+    <camera>
+      <horizontal_fov>1.047</horizontal_fov> <!-- 60 degrees -->
+      <image>
+        <width>640</width>
+        <height>480</height>
+        <format>R8G8B8</format>
+      </image>
+      <clip>
+        <near>0.1</near>
+        <far>10</far>
+      </clip>
+    </camera>
+    <always_on>1</always_on>
+    <update_rate>15</update_rate>
+    <visualize>true</visualize>
+  </sensor>
+
+  <sensor name="lidar_2d" type="ray">
+    <pose>0.05 0 0.3 0 0 0</pose> <!-- Slightly forward and high -->
+    <ray>
+      <scan>
+        <horizontal>
+          <samples>360</samples> <!-- 1 degree resolution -->
+          <resolution>1</resolution>
+          <min_angle>-3.14159</min_angle> <!-- -π -->
+          <max_angle>3.14159</max_angle> <!-- π -->
+        </horizontal>
+      </scan>
+      <range>
+        <min>0.1</min>
+        <max>10.0</max>
+        <resolution>0.01</resolution>
+      </range>
+    </ray>
+    <always_on>1</always_on>
+    <update_rate>10</update_rate>
+    <visualize>true</visualize>
+  </sensor>
+
+  My choices:
+  - Camera: 60° FOV balances wide view with resolution; 15Hz is sufficient for navigation
+  - LiDAR: 360° coverage for complete environment awareness; 10m range for indoor navigation
+  - Positioning: Camera forward-looking for obstacle detection; LiDAR elevated to see over low obstacles`}
+/>
+
+## Common Issues and Solutions
+
+### Sensor Data Quality
+- **Issue**: Unrealistic sensor readings
+- **Solution**: Verify noise parameters match real hardware specifications
+
+### Performance
+- **Issue**: Slow simulation due to high-resolution sensors
+- **Solution**: Reduce sensor resolution or update rates appropriately
+
+### Integration
+- **Issue**: Sensor data not appearing on ROS topics
+- **Solution**: Verify sensor plugins are properly configured and loaded
+
+## Summary
+
+Sensor simulation in Gazebo enables comprehensive testing of robotic perception and navigation algorithms. By configuring realistic sensors with appropriate noise models, you can develop and validate algorithms before deploying them on physical robots. Understanding how to properly configure and integrate sensors is crucial for effective simulation-based development.
+
+## Next Steps
+
+With a solid understanding of Gazebo simulation, you're ready to explore Unity for human-robot interaction in the next part of this module.

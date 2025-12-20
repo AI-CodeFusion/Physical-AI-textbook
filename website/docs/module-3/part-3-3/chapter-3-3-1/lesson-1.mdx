@@ -1,0 +1,396 @@
+---
+title: Lesson 3-3-1-1 - Nav2 for Humanoid Navigation
+sidebar_label: Lesson 1
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 3-3-1-1: Nav2 for Humanoid Navigation
+
+## Overview
+This lesson explores the adaptation of the ROS 2 Navigation (Nav2) stack for bipedal humanoid robots. You'll learn how to modify traditional wheeled robot navigation approaches to accommodate the unique kinematic and dynamic constraints of humanoid locomotion.
+
+<LearningObjectives objectives={[
+  "Understand the differences between wheeled and bipedal navigation",
+  "Configure Nav2 for humanoid-specific constraints",
+  "Implement path planning for bipedal locomotion",
+  "Handle humanoid-specific navigation challenges"
+]} />
+
+## Introduction to Humanoid Navigation
+
+### Challenges of Humanoid Navigation
+Humanoid navigation presents unique challenges compared to traditional wheeled or tracked robots:
+- **Dynamic balance**: Maintaining stability during movement
+- **Limited turning radius**: Cannot rotate in place like wheeled robots
+- **Step planning**: Need to plan foot placements for stable walking
+- **Terrain constraints**: Limited ability to traverse rough terrain
+- **Computational constraints**: Real-time balance control requirements
+
+### Differences from Wheeled Robot Navigation
+| Wheeled Robots | Humanoid Robots |
+|----------------|-----------------|
+| Can rotate in place | Require space for turning |
+| Continuous motion | Discrete step-based motion |
+| Simple kinematics | Complex dynamic balancing |
+| High maneuverability | Limited maneuverability |
+| No step planning needed | Requires footstep planning |
+
+## Nav2 Architecture for Humanoids
+
+### Core Components Adaptation
+The standard Nav2 stack needs modifications for humanoid navigation:
+
+1. **Global Planner**: Must account for humanoid kinematics
+2. **Local Planner**: Generates footstep plans instead of velocity commands
+3. **Controller**: Interfaces with humanoid balance controllers
+4. **Recovery Behaviors**: Adapted for humanoid-specific failures
+
+### Humanoid-Specific Constraints
+- **Kinematic constraints**: Limited joint angles and velocities
+- **Dynamic constraints**: Balance and stability requirements
+- **Footstep constraints**: Valid foot placement regions
+- **Energy efficiency**: Minimize power consumption during walking
+
+## Path Planning for Bipedal Movement
+
+### Global Path Planning
+For humanoids, the global path needs to consider:
+- **Walkable areas**: Regions where the humanoid can safely step
+- **Obstacle clearance**: Minimum space for the humanoid's body
+- **Turning space**: Areas allowing for humanoid turning maneuvers
+- **Stair/step navigation**: Special handling for elevation changes
+
+### Footstep Planning
+The local planner in humanoid navigation generates footstep plans:
+- **Footstep poses**: Position and orientation of each foot placement
+- **Swing trajectory**: Path of the foot between steps
+- **Timing**: When each step should occur
+- **Balance constraints**: Maintaining center of mass over support polygon
+
+### Example Footstep Planning Algorithm:
+```python
+import numpy as np
+from geometry_msgs.msg import Pose
+from nav2_msgs.action import NavigateToPose
+import rclpy
+from rclpy.action import ActionServer
+from rclpy.node import Node
+
+class HumanoidFootstepPlanner(Node):
+    def __init__(self):
+        super().__init__('humanoid_footstep_planner')
+
+        # Define humanoid-specific parameters
+        self.step_length = 0.3  # meters
+        self.step_width = 0.2  # meters
+        self.max_step_up = 0.1  # maximum height to step up
+        self.max_step_down = 0.15  # maximum height to step down
+        self.turn_radius = 0.4  # minimum turning radius
+
+    def plan_footsteps(self, start_pose, goal_pose, occupancy_map):
+        """
+        Plan a sequence of footsteps from start to goal
+        """
+        footsteps = []
+
+        # Calculate the path using a modified A* that accounts for humanoid constraints
+        path = self.humanoid_path_planner(start_pose, goal_pose, occupancy_map)
+
+        # Generate footsteps along the path
+        current_pose = start_pose
+        while not self.at_goal(current_pose, goal_pose):
+            # Determine next foot placement based on direction and constraints
+            next_foot_pose = self.calculate_next_footstep(current_pose, path)
+            footsteps.append(next_foot_pose)
+
+            # Update current pose based on the step
+            current_pose = self.update_pose_with_step(current_pose, next_foot_pose)
+
+        return footsteps
+
+    def calculate_next_footstep(self, current_pose, path):
+        """
+        Calculate the next foot placement based on current pose and path
+        """
+        # Calculate desired direction from path
+        desired_direction = self.get_direction_from_path(current_pose, path)
+
+        # Apply humanoid constraints to determine valid foot placement
+        foot_pose = self.constrain_foot_placement(current_pose, desired_direction)
+
+        return foot_pose
+
+    def constrain_foot_placement(self, current_pose, desired_direction):
+        """
+        Apply humanoid-specific constraints to foot placement
+        """
+        # Calculate potential foot position
+        foot_x = current_pose.position.x + self.step_length * desired_direction.x
+        foot_y = current_pose.position.y + self.step_length * desired_direction.y
+
+        # Apply step width constraints
+        foot_y += self.step_width / 2  # Alternate between left and right foot
+
+        # Create the foot pose
+        foot_pose = Pose()
+        foot_pose.position.x = foot_x
+        foot_pose.position.y = foot_y
+        foot_pose.position.z = 0.0  # Ground level
+        foot_pose.orientation = current_pose.orientation  # Maintain orientation
+
+        return foot_pose
+```
+
+## Balance and Stability Considerations
+
+### Center of Mass (CoM) Management
+- **ZMP (Zero Moment Point)**: Critical for humanoid balance
+- **Capture Point**: Where to place the next foot to stop motion
+- **Stability margins**: Safety margins around support polygon
+
+### Walking Patterns
+- **Static walking**: Stable at each step (slow, energy-intensive)
+- **Dynamic walking**: Stable only in motion (faster, more efficient)
+- **Walking gaits**: Different patterns for different speeds/terrains
+
+## Configuration for Humanoid Nav2
+
+### Parameter Configuration
+```yaml
+# humanoid_nav2_params.yaml
+amcl:
+  ros__parameters:
+    use_sim_time: false
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: "base_link"
+    beam_skip_distance: 0.5
+    beam_skip_error_threshold: 0.9
+    beam_skip_threshold: 0.3
+    do_beamskip: false
+    global_frame_id: "map"
+    lambda_short: 0.1
+    laser_likelihood_max_dist: 2.0
+    laser_max_range: 100.0
+    laser_min_range: -1.0
+    laser_model_type: "likelihood_field"
+    max_beams: 60
+    max_particles: 2000
+    min_particles: 500
+    odom_frame_id: "odom"
+    pf_err: 0.05
+    pf_z: 0.99
+    recovery_alpha_fast: 0.0
+    recovery_alpha_slow: 0.0
+    resample_interval: 1
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    save_pose_rate: 0.5
+    set_initial_pose: false
+    sigma_hit: 0.2
+    tf_broadcast: true
+    transform_tolerance: 1.0
+    update_min_a: 0.2
+    update_min_d: 0.1
+    z_hit: 0.5
+    z_max: 0.05
+    z_rand: 0.5
+    z_short: 0.05
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: "map"
+    robot_base_frame: "base_link"
+    odom_topic: "/odom"
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    enable_groot_monitoring: True
+    groot_zmq_publisher_port: 1666
+    groot_zmq_server_port: 1667
+    # Specify the path where the .xml file is located
+    default_nav_through_poses_bt_xml: "humanoid_navigate_through_poses_w_replanning_and_recovery.xml"
+    default_nav_to_pose_bt_xml: "humanoid_navigate_to_pose_w_replanning_and_recovery.xml"
+    # Customize the recovery behavior for humanoid robots
+    behavior_tree_xml_filename: "humanoid_navigate_to_pose_w_replanning_and_recovery.xml"
+
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 20.0  # Lower frequency for humanoid control
+    min_x_velocity_threshold: 0.01
+    min_y_velocity_threshold: 0.01
+    min_theta_velocity_threshold: 0.01
+    # Humanoid-specific controllers
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugin: "goal_checker"
+    controller_plugins: ["FollowPath"]
+
+    # Humanoid path follower
+    FollowPath:
+      plugin: "nav2_mppi_controller::MPPIController"
+      time_steps: 50
+      model_dt: 0.1
+      batch_size: 1000
+      vx_std: 0.2
+      vy_std: 0.1
+      wz_std: 0.2
+      vx_max: 0.4
+      vx_min: -0.2
+      vy_max: 0.1
+      vy_min: -0.1
+      wz_max: 0.4
+      wz_min: -0.4
+      goal_dist_tol: 0.25
+      xy_goal_tol: 0.25
+      trans_stopped_velocity: 0.25
+      short_circuit_trajectory: True
+      # Humanoid-specific parameters
+      step_size_limit: 0.3  # Max step size for humanoid
+      balance_constraint_weight: 10.0  # Weight for balance constraints
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: "odom"
+      robot_base_frame: "base_link"
+      use_sim_time: false
+      rolling_window: true
+      width: 6
+      height: 6
+      resolution: 0.05  # Higher resolution for precise foot placement
+      robot_radius: 0.3  # Humanoid radius for collision checking
+      plugins: ["voxel_layer", "inflation_layer"]
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
+      voxel_layer:
+        plugin: "nav2_costmap_2d::VoxelLayer"
+        enabled: True
+        publish_voxel_map: True
+        origin_z: 0.0
+        z_resolution: 0.2
+        z_voxels: 8
+        max_obstacle_height: 2.0
+        mark_threshold: 0
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: "map"
+      robot_base_frame: "base_link"
+      use_sim_time: false
+      robot_radius: 0.3  # Humanoid radius
+      resolution: 0.05  # Higher resolution for precise planning
+      track_unknown_space: true
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "LaserScan"
+          raytrace_max_range: 3.0
+          raytrace_min_range: 0.0
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.0
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
+```
+
+## Exercise
+
+<Exercise
+  title="Humanoid Navigation System Design"
+  description="Design a navigation system for a humanoid robot that needs to navigate through a cluttered home environment. Specify the key modifications needed to Nav2, the constraints for footstep planning, and how you would handle narrow passages and doorways."
+  solution={`For a humanoid robot navigating a cluttered home environment:
+
+  Nav2 Modifications:
+  - Global planner: Account for humanoid body size and turning radius
+  - Local planner: Generate footstep plans instead of velocity commands
+  - Costmap: Higher resolution for precise foot placement
+  - Recovery behaviors: Humanoid-specific actions (e.g., step adjustments)
+
+  Footstep Planning Constraints:
+  - Minimum step width: 0.15m to maintain balance
+  - Maximum step length: 0.4m to ensure stability
+  - Turning radius: Minimum 0.4m for safe turning
+  - Stair climbing: Special gait for step navigation
+
+  Narrow Passage Handling:
+  - Sideways walking for very narrow spaces
+  - Precise footstep placement to avoid obstacles
+  - Dynamic replanning if footstep is invalid
+  - Safety margins for body clearance
+
+  Doorway Navigation:
+  - Approach angle optimization for doorways
+  - Footstep plan to center the robot in the doorway
+  - Turning strategy after passing through narrow openings
+  - Balance maintenance during doorway transitions`}
+/>
+
+## Humanoid-Specific Recovery Behaviors
+
+### Common Navigation Failures
+- **Step failure**: Foot placement not achievable
+- **Balance loss**: Center of mass outside support polygon
+- **Path obstruction**: Unexpected obstacles in planned path
+- **Localization failure**: Loss of position estimate
+
+### Recovery Strategies
+- **Footstep replanning**: Adjust foot placement to avoid obstacles
+- **Safe stopping**: Gradually stop while maintaining balance
+- **Backup steps**: Retreat to a safe position
+- **Alternative paths**: Compute new paths around obstacles
+
+## Performance Optimization
+
+### Computational Efficiency
+- **Simplified models**: Use simplified models for real-time planning
+- **Predictive planning**: Plan only necessary steps ahead
+- **Parallel processing**: Separate balance control and path planning
+- **Hierarchical planning**: High-level path with detailed footstep planning
+
+### Balance Maintenance
+- **ZMP tracking**: Maintain zero moment point within support polygon
+- **Capture point planning**: Ensure next footstep stops momentum
+- **Feedback control**: Adjust stepping based on balance state
+- **Predictive control**: Anticipate balance changes
+
+## Summary
+
+Adapting Nav2 for humanoid navigation requires significant modifications to account for the unique kinematic and dynamic constraints of bipedal locomotion. The system must generate footstep plans rather than velocity commands, consider balance and stability throughout navigation, and handle the more complex turning and maneuvering requirements of humanoid robots. Understanding these adaptations is crucial for implementing effective navigation systems for humanoid robots.
+
+## Next Steps
+
+In the next lesson, we'll explore advanced path planning techniques specifically designed for humanoid robots, including dynamic walking patterns and terrain adaptation strategies.

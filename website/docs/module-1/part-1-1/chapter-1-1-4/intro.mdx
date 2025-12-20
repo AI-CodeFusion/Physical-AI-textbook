@@ -1,0 +1,53 @@
+---
+title: Chapter 1-1-4 - URDF for Humanoids
+sidebar_label: Chapter Introduction
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+
+# Chapter 1-1-4: URDF for Humanoids
+
+## Overview
+This chapter introduces the Unified Robot Description Format (URDF) and its specific applications for humanoid robots. You'll learn how to define complex humanoid robot models that can be used for simulation, visualization, and control in ROS 2-based systems.
+
+<LearningObjectives objectives={[
+  "Understand the structure and components of URDF files",
+  "Create URDF models for humanoid robots",
+  "Define joints, links, and physical properties for humanoids",
+  "Visualize and validate URDF models in RViz"
+]} />
+
+## What is URDF?
+
+URDF (Unified Robot Description Format) is an XML-based format used to describe robot models in ROS. For humanoid robots, URDF is particularly important as it defines the kinematic chain, physical properties, and visual representations of complex multi-joint systems with legs, arms, and torso structures.
+
+## URDF Components for Humanoids
+
+A humanoid URDF model typically includes:
+
+- **Links**: Rigid bodies representing robot parts (torso, limbs, head)
+- **Joints**: Connections between links with specific degrees of freedom
+- **Materials**: Visual appearance definitions
+- **Collision models**: Geometric shapes for physics simulation
+- **Inertial properties**: Mass, center of mass, and inertia tensors
+
+## Challenges with Humanoid Models
+
+Humanoid robots present unique challenges in URDF:
+
+- Complex kinematic chains with multiple closed loops
+- Numerous degrees of freedom requiring careful joint definition
+- Balance and stability considerations
+- Integration with simulation physics engines
+
+## Chapter Roadmap
+
+In this chapter, you'll learn about URDF for humanoid robots through a lesson:
+
+- **Lesson 1**: We'll explore creating and validating URDF models specifically designed for humanoid robots, covering best practices and common pitfalls.
+
+By the end of this chapter, you'll be able to create comprehensive URDF models for humanoid robots that can be used in simulation and control applications.
+
+## Next Steps
+
+Continue to Lesson 1 to begin creating URDF models for humanoid robots.

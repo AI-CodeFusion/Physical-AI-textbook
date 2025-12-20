@@ -1,0 +1,277 @@
+---
+title: URDF for Humanoids
+sidebar_label: URDF for Humanoids
+description: Learn about Unified Robot Description Format (URDF) for humanoid robots
+keywords: [urdf, robot description, humanoid, robotics, model]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# URDF for Humanoids
+
+## Overview
+This lesson covers the Unified Robot Description Format (URDF) specifically for humanoid robots.
+
+<LearningObjectives objectives={[
+  "Understand the structure of URDF files",
+  "Create URDF files for humanoid robots",
+  "Define joints, links, and materials for humanoid models",
+  "Understand the differences between wheeled robots and humanoid URDFs"
+]} />
+
+## What is URDF?
+URDF (Unified Robot Description Format) is an XML format used in ROS to describe robots. It specifies the physical and visual properties of a robot, including:
+
+- Joint connections
+- Link shapes and sizes
+- Collisions
+- Inertial properties
+- Materials and visual appearance
+
+## URDF Structure for Humanoids
+
+Here's an example URDF for a simple humanoid robot:
+
+```xml
+<?xml version="1.0"?>
+<robot name="simple_humanoid">
+  <!-- Materials -->
+  <material name="blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>
+  <material name="black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+  <material name="white">
+    <color rgba="1.0 1.0 1.0 1.0"/>
+  </material>
+
+  <!-- Base Link -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.6" radius="0.2"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.6" radius="0.2"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="10.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <!-- Torso -->
+  <link name="torso">
+    <visual>
+      <geometry>
+        <box size="0.3 0.3 0.6"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.3 0.3 0.6"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="5.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="torso_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="torso"/>
+    <origin xyz="0 0 0.5"/>
+  </joint>
+
+  <!-- Head -->
+  <link name="head">
+    <visual>
+      <geometry>
+        <sphere radius="0.15"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <sphere radius="0.15"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="neck_joint" type="revolute">
+    <parent link="torso"/>
+    <child link="head"/>
+    <origin xyz="0 0 0.3"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="100.0" velocity="1.0"/>
+  </joint>
+
+  <!-- Left Arm -->
+  <link name="left_upper_arm">
+    <visual>
+      <geometry>
+        <cylinder length="0.4" radius="0.05"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.4" radius="0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="left_shoulder_joint" type="revolute">
+    <parent link="torso"/>
+    <child link="left_upper_arm"/>
+    <origin xyz="0.15 0 0.1" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="100.0" velocity="1.0"/>
+  </joint>
+
+  <!-- Right Arm (similar to left) -->
+  <link name="right_upper_arm">
+    <visual>
+      <geometry>
+        <cylinder length="0.4" radius="0.05"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.4" radius="0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_shoulder_joint" type="revolute">
+    <parent link="torso"/>
+    <child link="right_upper_arm"/>
+    <origin xyz="-0.15 0 0.1" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="100.0" velocity="1.0"/>
+  </joint>
+
+  <!-- Left Leg -->
+  <link name="left_upper_leg">
+    <visual>
+      <geometry>
+        <cylinder length="0.5" radius="0.07"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.5" radius="0.07"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="left_hip_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="left_upper_leg"/>
+    <origin xyz="0.1 0 -0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="100.0" velocity="1.0"/>
+  </joint>
+
+  <!-- Right Leg -->
+  <link name="right_upper_leg">
+    <visual>
+      <geometry>
+        <cylinder length="0.5" radius="0.07"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.5" radius="0.07"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <joint name="right_hip_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="right_upper_leg"/>
+    <origin xyz="-0.1 0 -0.3" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="100.0" velocity="1.0"/>
+  </joint>
+</robot>
+```
+
+## Key Considerations for Humanoid URDFs
+
+### Joint Types for Humanoids
+Humanoids require specific joint types to mimic human movement:
+- **Revolute joints**: For rotating joints like shoulders, elbows, hips, and knees
+- **Fixed joints**: For permanent connections like head to neck
+- **Continuous joints**: For joints that can rotate indefinitely (rarely used in humanoids)
+
+### Balance and Stability
+Humanoid robots require special attention to:
+- Center of mass location
+- Foot contact points for stability
+- Proper inertial properties for realistic simulation
+
+### Kinematic Chains
+Humanoid URDFs typically have multiple kinematic chains:
+- Left arm chain (torso → shoulder → elbow → wrist)
+- Right arm chain (torso → shoulder → elbow → wrist)
+- Left leg chain (base → hip → knee → ankle)
+- Right leg chain (base → hip → knee → ankle)
+
+## Visualization Tools
+URDF models can be visualized in several tools:
+- RViz for ROS visualization
+- Gazebo for physics simulation
+- 3D modeling software like Blender (with URDF import plugins)
+
+## Summary
+URDF is a critical component for humanoid robotics as it defines the physical structure and kinematic properties of the robot. Properly defining links, joints, and inertial properties is essential for realistic simulation and control of humanoid robots.
+
+## Knowledge Check
+
+<AssessmentComponent
+  type="multiple-choice"
+  question="What does URDF stand for?"
+  options={[
+    "Unified Robot Description File",
+    "Unified Robot Definition Format",
+    "Unified Robot Description Format",
+    "Universal Robot Definition File"
+  ]}
+  correctAnswer={2}
+  explanation="URDF stands for Unified Robot Description Format, which is an XML format used in ROS to describe robots."
+/>
+
+## Next Steps
+Continue to the next lessons to learn about practice exercises and assessments for ROS 2 fundamentals.

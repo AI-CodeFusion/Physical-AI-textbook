@@ -1,0 +1,56 @@
+---
+title: Chapter 1-1-2 - ROS 2 Nodes
+sidebar_label: Chapter Introduction
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+
+# Chapter 1-1-2: ROS 2 Nodes
+
+## Overview
+This chapter builds upon the foundational concepts introduced in Chapter 1-1-1 and delves deeper into the fundamental building blocks of ROS 2 systems: nodes. You'll learn how to create, configure, and manage ROS 2 nodes - the individual processes that make up a distributed robotic system.
+
+<LearningObjectives objectives={[
+  "Create and run ROS 2 nodes",
+  "Understand the lifecycle of a ROS 2 node",
+  "Implement communication patterns using nodes",
+  "Configure nodes with parameters and namespaces"
+]} />
+
+## What Are ROS 2 Nodes?
+
+In ROS 2, a node is an executable that uses ROS 2 client libraries to communicate with other nodes. Nodes are the fundamental units of computation in a ROS 2 system. Each node typically performs a specific function within the larger robotic system, such as controlling a sensor, processing data, or commanding actuators.
+
+Nodes communicate with each other through well-defined interfaces, allowing for modular, distributed systems that can scale from simple robots to complex multi-robot applications.
+
+## Node Architecture
+
+Every ROS 2 node contains:
+
+- **Executor**: Manages the execution of callbacks and timers
+- **Node Handle**: Provides the interface to the ROS 2 graph
+- **Publishers and Subscribers**: For topic-based communication
+- **Clients and Servers**: For service-based communication
+- **Parameters**: Configuration values that can be adjusted at runtime
+- **Timers**: For periodic execution of functions
+
+## Communication Patterns
+
+ROS 2 supports several communication patterns between nodes:
+
+1. **Topics (Publish/Subscribe)**: Unidirectional data streaming
+2. **Services (Request/Response)**: Synchronous request-response communication
+3. **Actions**: Asynchronous request-response with feedback and status
+
+## Chapter Roadmap
+
+In this chapter, you'll explore ROS 2 nodes through two lessons:
+
+- **Lesson 1**: We'll focus on creating and running ROS 2 nodes, understanding their basic structure and lifecycle.
+- **Lesson 2**: We'll examine ROS 2 communication patterns including topics, services, and the role of nodes in these interactions.
+
+By the end of this chapter, you'll be able to create functional ROS 2 nodes and implement basic communication patterns between them.
+
+## Next Steps
+
+Continue to Lesson 1 to learn how to create and run your first ROS 2 node.

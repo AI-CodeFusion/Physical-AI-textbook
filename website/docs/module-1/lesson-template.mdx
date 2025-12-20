@@ -1,0 +1,62 @@
+---
+title: Lesson Title
+sidebar_label: Lesson Title
+description: Brief description of the lesson
+keywords: [keyword1, keyword2, keyword3]
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import SimulationComponent from '@site/src/components/Simulations/SimulationComponent';
+import AssessmentComponent from '@site/src/components/Assessment/AssessmentComponent';
+
+# Lesson Title
+
+## Overview
+Brief overview of what will be covered in this lesson.
+
+<LearningObjectives objectives={[
+  "First learning objective",
+  "Second learning objective",
+  "Third learning objective"
+]} />
+
+## Main Content
+This is where the main lesson content goes. You can include text, code snippets, images, and other elements.
+
+```python
+# Example code snippet
+def example_function():
+    print("This is an example code snippet")
+    return "Hello, Physical AI!"
+```
+
+## Simulation
+Interactive components like simulations can be embedded here:
+
+<SimulationComponent 
+  simulationId="example-simulation" 
+  title="Example Simulation" 
+  description="This is an example of how simulations are embedded in lessons" 
+/>
+
+## Knowledge Check
+Test your understanding with this assessment:
+
+<AssessmentComponent
+  type="multiple-choice"
+  question="What is the correct answer to this question?"
+  options={[
+    "Option A",
+    "Option B",
+    "Option C",
+    "Option D"
+  ]}
+  correctAnswer={1}
+  explanation="This is the explanation for why option B is correct."
+/>
+
+## Summary
+In this lesson, you learned about...
+
+## Next Steps
+Continue to the next lesson to learn about...

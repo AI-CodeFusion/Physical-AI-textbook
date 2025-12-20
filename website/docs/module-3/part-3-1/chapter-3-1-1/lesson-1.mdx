@@ -1,0 +1,210 @@
+---
+title: Lesson 3-1-1-1 - Synthetic Data Generation
+sidebar_label: Lesson 1
+---
+
+import LearningObjectives from '@site/src/components/utils/LearningObjectives';
+import Exercise from '@site/src/components/utils/Exercise';
+
+# Lesson 3-1-1-1: Synthetic Data Generation
+
+## Overview
+This lesson introduces synthetic data generation using NVIDIA Isaac Sim, a powerful tool for creating labeled training data for AI models. You'll learn how to generate diverse, photorealistic datasets that can accelerate the development of perception algorithms for robotics applications.
+
+<LearningObjectives objectives={[
+  "Understand the principles of synthetic data generation",
+  "Configure Isaac Sim for diverse dataset creation",
+  "Implement domain randomization techniques",
+  "Evaluate the quality of synthetic datasets"
+]} />
+
+## Introduction to Synthetic Data Generation
+
+Synthetic data generation is a critical technology in modern robotics and AI development. It allows for the creation of large, diverse, and perfectly labeled datasets without the time and cost constraints of real-world data collection.
+
+### Why Synthetic Data?
+
+Traditional data collection faces several challenges:
+- Time-consuming and expensive real-world data collection
+- Difficulty in capturing rare or dangerous scenarios
+- Privacy concerns with real-world data
+- Limited diversity in real-world datasets
+- Costly annotation of real data
+
+Synthetic data addresses these challenges by:
+- Providing unlimited, diverse scenarios
+- Offering perfect annotations automatically
+- Enabling safe testing of edge cases
+- Reducing development costs and time
+- Allowing precise control over environmental conditions
+
+## NVIDIA Isaac Sim for Data Generation
+
+Isaac Sim is NVIDIA's comprehensive simulation environment built on the Omniverse platform. It provides:
+- Photorealistic rendering using RTX technology
+- Accurate physics simulation
+- Extensive robot models and environments
+- Integrated tools for synthetic data generation
+
+### Key Features for Data Generation
+- **PhysX GPU-accelerated physics**: Realistic physics simulation
+- **RTX denoised path tracing**: Photorealistic rendering
+- **Synthetic data generation tools**: Automatic annotation
+- **Domain randomization**: Diverse dataset creation
+- **ROS 2 and ROS bridge**: Integration with robotics frameworks
+
+## Synthetic Data Generation Techniques
+
+### Sensor Simulation
+Isaac Sim can simulate various sensors:
+- RGB cameras with realistic lens effects
+- Depth cameras with noise modeling
+- LiDAR sensors with configurable parameters
+- IMU and other sensor types
+
+### Automatic Annotation
+Synthetic data comes with perfect ground truth:
+- 2D and 3D bounding boxes
+- Instance segmentation masks
+- Semantic segmentation
+- Depth maps
+- Surface normals
+
+### Domain Randomization
+To improve model generalization, Isaac Sim implements domain randomization:
+- Random textures and materials
+- Variable lighting conditions
+- Diverse backgrounds
+- Randomized object appearances
+
+## Implementation in Isaac Sim
+
+### Setting Up a Data Generation Environment
+```python
+import omni
+from omni.isaac.synthetic_data.scripts import sgd
+from omni.isaac.core import World
+from omni.isaac.core.utils.stage import add_reference_to_stage
+
+# Initialize Isaac Sim
+world = World(stage_units_in_meters=1.0)
+
+# Add robot and environment
+add_reference_to_stage(
+    usd_path="/Isaac/Robots/Franka/franka.usd",
+    prim_path="/World/Robot"
+)
+
+# Configure synthetic data generation
+sgd_config = {
+    "camera": {
+        "resolution": (640, 480),
+        "position": (1.0, 0.0, 1.5),
+        "rotation": (0.0, 0.0, 0.0)
+    },
+    "annotations": ["bounding_box_2d_tight", "semantic_segmentation"]
+}
+
+# Generate dataset
+sgd.generate_dataset(config=sgd_config, num_frames=1000)
+```
+
+### Domain Randomization Example
+```python
+from omni.isaac.core.utils.prims import get_prim_at_path
+from omni.isaac.core.materials import PreviewSurface
+import random
+
+def randomize_materials():
+    # Randomize object materials
+    for i in range(10):
+        prim_path = f"/World/Object_{i}"
+        prim = get_prim_at_path(prim_path)
+
+        # Random color
+        color = (random.random(), random.random(), random.random())
+
+        # Apply new material
+        material = PreviewSurface(
+            prim_path=f"/World/Looks/Material_{i}",
+            color=color
+        )
+        material.apply(prim_path)
+```
+
+## Quality Considerations
+
+### Reality Gap
+The difference between synthetic and real data can affect model performance:
+- Imperfections in simulation physics
+- Differences in sensor models
+- Limited environmental complexity
+- Texture and material accuracy
+
+### Strategies to Reduce Reality Gap
+- Photo-realistic rendering
+- Accurate sensor simulation
+- Validation against real data
+- Sim-to-real transfer techniques
+- Mixed real-synthetic training
+
+## Exercise
+
+<Exercise
+  title="Synthetic Data Pipeline Design"
+  description="Design a synthetic data generation pipeline for training an object detection model to identify industrial parts on a conveyor belt. Specify the key parameters for the Isaac Sim environment, the types of annotations needed, and how you would implement domain randomization to ensure model robustness."
+  solution={`Here's a synthetic data generation pipeline for industrial part detection:
+
+  Environment Setup:
+  - Conveyor belt with moving parts
+  - Industrial lighting with variable intensity
+  - Camera positioned above the conveyor
+  - Multiple robot arms for dynamic scenarios
+
+  Annotation Types:
+  - 2D bounding boxes for part detection
+  - Instance segmentation for part identification
+  - 6D pose estimation for part orientation
+
+  Domain Randomization Parameters:
+  - Random part colors and textures
+  - Variable lighting conditions (intensity, direction, color temperature)
+  - Different conveyor belt materials
+  - Background variations (factory floor, walls, equipment)
+  - Camera position and angle variations
+  - Part orientation and placement variations
+
+  Data Generation Strategy:
+  - 10,000+ frames with different part configurations
+  - Balanced distribution of part types
+  - Varying part densities on conveyor
+  - Occlusion scenarios with multiple parts`}
+/>
+
+## Best Practices
+
+### Dataset Planning
+- Define clear objectives for the dataset
+- Plan for diverse scenarios and edge cases
+- Balance dataset size with computational resources
+- Consider the target deployment environment
+
+### Validation
+- Compare synthetic vs. real data distributions
+- Test model performance on real-world data
+- Iteratively refine simulation parameters
+- Use a small real dataset for validation
+
+### Computational Efficiency
+- Optimize scene complexity for generation speed
+- Use appropriate rendering resolutions
+- Batch generation processes
+- Leverage GPU acceleration
+
+## Summary
+
+Synthetic data generation with Isaac Sim provides a powerful approach to creating training datasets for robotics AI applications. By leveraging photorealistic rendering, automatic annotation, and domain randomization, you can create diverse, labeled datasets that accelerate AI development while reducing costs and time requirements. Understanding how to effectively configure and validate synthetic data generation is crucial for successful robot perception system development.
+
+## Next Steps
+
+In the next lesson, we'll explore advanced simulation techniques in Isaac Sim that further enhance the realism and utility of synthetic data for robotics applications.
